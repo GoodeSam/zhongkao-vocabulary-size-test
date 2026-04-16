@@ -1,0 +1,10 @@
+# Exclude source data and working files
+*.xlsx
+*.md
+!README.md
+*.json
+.DS_Store
+.claude/
+1全国中考真题/
+assets/
+tumei321123.jpg
