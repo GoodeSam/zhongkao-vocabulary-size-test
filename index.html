@@ -910,6 +910,26 @@ function finishTest(){
   }
   const equivGrade=vocabToGrade(totalM);
 
+  // Compare vocab level with current grade
+  const gradeOrder=['小学1年级','小学2年级','小学3年级','小学4年级','小学5年级','小学6年级','初中1年级','初中2年级','初中3年级','高中1年级','高中2年级','高中3年级'];
+  const curIdx=gradeOrder.indexOf(_stuGrade);
+  const eqIdx=gradeOrder.indexOf(equivGrade);
+  const diff=eqIdx-curIdx;
+  let compareText='',compareColor='',compareIcon='';
+  if(_stuGrade==='其他'||curIdx<0){
+    compareText='';
+  }else if(diff>=2){
+    compareText='大幅领先当前年级水平！';compareColor='var(--ok)';compareIcon='🚀';
+  }else if(diff===1){
+    compareText='略微领先当前年级水平';compareColor='var(--ok)';compareIcon='👍';
+  }else if(diff===0){
+    compareText='与当前年级水平匹配';compareColor='var(--primary)';compareIcon='✅';
+  }else if(diff===-1){
+    compareText='略低于当前年级水平，需加把劲';compareColor='var(--warn)';compareIcon='💪';
+  }else{
+    compareText='明显落后于当前年级水平，建议重点补强';compareColor='var(--err)';compareIcon='⚠️';
+  }
+
   let h='';
 
   // ── Personalized summary ──
@@ -918,6 +938,9 @@ function finishTest(){
       ${_stuName} 同学，你的词汇量约为 <span style="font-size:22px">${totalM}</span> 词，相当于<span style="font-size:18px;color:#7c3aed">${equivGrade}</span>的单词水平
     </div>
     <div style="font-size:12px;color:var(--gray);margin-top:4px">当前年级：${_stuGrade}</div>
+    ${compareText?`<div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:#fff;font-size:14px;font-weight:700;color:${compareColor}">
+      ${compareIcon} ${compareText}
+    </div>`:''}
   </div>`;
 
   // ── Summary ──
