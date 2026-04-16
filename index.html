@@ -1001,9 +1001,9 @@ function finishTest(){
       <div style="font-size:12px;color:#8b949e;text-align:center;margin:2px 0 8px;line-height:1.5;letter-spacing:.3px">
         <span style="color:#60a5fa;font-weight:700">公开打卡 = 社交监督</span><br>让朋友见证你迈向下一个高度
       </div>
-      <button class="btn-share btn-dl" onclick="downloadPDF()">
+      <button class="btn-share btn-dl" onclick="downloadReport()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        下载完整PDF报告（可转发给家长/老师）
+        下载完整报告（PDF + 长图）
       </button>
       <button class="btn-share btn-tutor" onclick="contactTutor()">
         联系土妹 &rarr; 获得你的专属词汇提升计划
@@ -1038,6 +1038,11 @@ function showAll(){
   });
   tbody.innerHTML=h;
   const btn=document.querySelector('.show-all-btn');if(btn)btn.remove();
+}
+
+function downloadReport(){
+  downloadPDF();
+  shareToMoments();
 }
 
 function downloadPDF(){
