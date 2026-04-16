@@ -998,41 +998,40 @@ function finishTest(){
     <div class="ri"><div class="ri-t">阅读理解</div>
       <div class="ri-bar"><div class="ri-bar-i" style="width:${readPct}%"></div></div>
       <div class="ri-p">${readPct}%</div></div>
-    <div id="riskPieWrap" style="display:flex;justify-content:center;margin-top:16px"></div>
+    <div id="riskRingsWrap" style="display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:16px"></div>
   </div>`;
 
-  // Draw risk pie chart
+  // Draw four ring charts
   setTimeout(()=>{
-    const wrap=document.getElementById('riskPieWrap');
+    const wrap=document.getElementById('riskRingsWrap');
     if(!wrap)return;
-    const cv=document.createElement('canvas');
-    const sz=220,r=70,cx=sz/2,cy=sz/2;
-    cv.width=sz;cv.height=sz;
-    const c=cv.getContext('2d');
-    const data=[{label:'完形填空',value:clozePct,color:'#4361ee'},{label:'语法填空',value:gramPct,color:'#7c3aed'},{label:'阅读理解',value:readPct,color:'#10b981'}];
-    const total=data.reduce((s,d)=>s+d.value,0)||1;
-    let angle=-Math.PI/2;
-    data.forEach(d=>{
-      const slice=d.value/total*Math.PI*2;
-      c.beginPath();c.moveTo(cx,cy);c.arc(cx,cy,r,angle,angle+slice);c.closePath();
-      c.fillStyle=d.color;c.fill();
-      // label
-      const mid=angle+slice/2;
-      const lx=cx+Math.cos(mid)*(r+22);
-      const ly=cy+Math.sin(mid)*(r+22);
-      c.fillStyle='#1e293b';c.font='bold 11px -apple-system,sans-serif';c.textAlign='center';c.textBaseline='middle';
-      c.fillText(d.label,lx,ly-7);
-      c.fillStyle=d.color;c.font='bold 13px -apple-system,sans-serif';
-      c.fillText(d.value+'%',lx,ly+8);
-      angle+=slice;
+    const avgPctVal=Math.round((clozePct+gramPct+readPct)/3);
+    const rings=[
+      {label:'完形填空',value:clozePct,color:'#4361ee'},
+      {label:'语法填空',value:gramPct,color:'#7c3aed'},
+      {label:'阅读理解',value:readPct,color:'#10b981'},
+      {label:'平均',value:avgPctVal,color:'#f59e0b'}
+    ];
+    rings.forEach(d=>{
+      const sz=120,lw=10,r=(sz-lw)/2-14,cx=sz/2,cy=sz/2-4;
+      const cv=document.createElement('canvas');
+      cv.width=sz;cv.height=sz;
+      const c=cv.getContext('2d');
+      // background ring
+      c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);
+      c.strokeStyle='#e2e8f0';c.lineWidth=lw;c.lineCap='round';c.stroke();
+      // filled arc
+      const end=-Math.PI/2+(d.value/100)*Math.PI*2;
+      c.beginPath();c.arc(cx,cy,r,-Math.PI/2,end);
+      c.strokeStyle=d.color;c.lineWidth=lw;c.lineCap='round';c.stroke();
+      // percentage text
+      c.fillStyle='#1e293b';c.font='bold 18px -apple-system,sans-serif';c.textAlign='center';c.textBaseline='middle';
+      c.fillText(d.value+'%',cx,cy);
+      // label below ring
+      c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';c.textAlign='center';
+      c.fillText(d.label,cx,sz-6);
+      wrap.appendChild(cv);
     });
-    // white center
-    c.beginPath();c.arc(cx,cy,r*0.5,0,Math.PI*2);c.fillStyle='#fff';c.fill();
-    c.fillStyle='#1e293b';c.font='bold 13px -apple-system,sans-serif';c.textAlign='center';c.textBaseline='middle';
-    c.fillText(Math.round(total/3)+'%',cx,cy-6);
-    c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';
-    c.fillText('平均',cx,cy+9);
-    wrap.appendChild(cv);
   },0);
 
   // ── High-risk word list ──
