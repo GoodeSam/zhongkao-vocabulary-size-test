@@ -944,10 +944,10 @@ function finishTest(){
 
   // Map vocabulary size to grade level
   function vocabToGrade(n){
-    if(n>=3500)return'高中3年级';if(n>=3000)return'高中2年级';if(n>=2500)return'高中1年级';
-    if(n>=2000)return'初中3年级';if(n>=1600)return'初中2年级';if(n>=1200)return'初中1年级';
-    if(n>=900)return'小学6年级';if(n>=700)return'小学5年级';if(n>=500)return'小学4年级';
-    if(n>=300)return'小学3年级';if(n>=150)return'小学2年级';return'小学1年级';
+    if(n>=3500)return'高中3年级';if(n>=2800)return'高中2年级';if(n>=2400)return'高中1年级';
+    if(n>=1800)return'初中3年级';if(n>=1300)return'初中2年级';if(n>=900)return'初中1年级';
+    if(n>=700)return'小学6年级';if(n>=500)return'小学5年级';if(n>=350)return'小学4年级';
+    if(n>=250)return'小学3年级';if(n>=150)return'小学2年级';return'小学1年级';
   }
   const equivGrade=vocabToGrade(totalM);
 
