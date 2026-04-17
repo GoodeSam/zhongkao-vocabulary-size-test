@@ -971,31 +971,7 @@ function finishTest(){
     compareText='明显落后于当前年级水平，建议重点补强';compareColor='var(--err)';compareIcon='⚠️';
   }
 
-  let h='';
-
-  // ── Scientific basis ──
-  h+=`<div class="card fade" style="border-left:4px solid var(--primary)">
-    <div class="card-t">本次诊断的科学依据</div>
-    <div style="font-size:12px;color:var(--gray);line-height:1.8">
-      <p style="margin-bottom:6px">本诊断基于 <b>142 份全国中考真题</b>的词频统计数据，运用语言学<b>齐普夫法则</b>原理构建。研究表明，中考英语中少量高频词覆盖了绝大部分题目内容——彻底掌握高频词汇比盲目扩大词汇量更能有效提分。</p>
-      <p style="margin-bottom:6px">测试采用<b>三轮自适应算法</b>：广度扫描 → 聚焦探测 → 薄弱确认，结合反应时间与置信度分析，精准定位你的真实词汇水平，而非简单的对错统计。</p>
-      <p>以下报告将为你展示词汇覆盖率、各题型得分预估、年级排名，以及针对性的学习方案。</p>
-    </div>
-  </div>`;
-
-  // ── Personalized summary ──
-  h+=`<div class="card fade" style="background:linear-gradient(135deg,#eef0ff,#f5f0ff);border:2px solid var(--primary)">
-    <div style="font-size:16px;font-weight:800;color:var(--primary);line-height:1.8">
-      ${_stuName} 同学，你的词汇量约为 <span style="font-size:22px">${totalM}</span> 词，相当于<span style="font-size:18px;color:#7c3aed">${equivGrade}</span>的单词水平
-    </div>
-    <div style="font-size:12px;color:var(--gray);margin-top:4px">当前年级：${_stuGrade}</div>
-    ${compareText?`<div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:#fff;font-size:14px;font-weight:700;color:${compareColor}">
-      ${compareIcon} ${compareText}
-    </div>`:''}
-  </div>`;
-
-  // ── Percentile ranking ──
-  // Expected vocab (mean, stddev) per grade for percentile estimation
+  // ── Percentile ──
   const gradeVocab={'小学1年级':[80,40],'小学2年级':[180,60],'小学3年级':[350,90],'小学4年级':[550,120],'小学5年级':[750,150],'小学6年级':[950,180],'初中1年级':[1300,220],'初中2年级':[1700,260],'初中3年级':[2100,300],'高中1年级':[2600,350],'高中2年级':[3100,380],'高中3年级':[3600,400]};
   function normalCDF(x){const t=1/(1+0.2316419*Math.abs(x)),p=t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+1.330274429*t))));const v=1-p*Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);return x>=0?v:1-v}
   let pctile=null;
@@ -1004,36 +980,54 @@ function finishTest(){
     const z=(totalM-mu)/sigma;
     pctile=Math.max(1,Math.min(99,Math.round(normalCDF(z)*100)));
   }
-  if(pctile!==null){
-    const topPct=100-pctile;
-    h+=`<div class="card fade">
-      <div class="card-t">年级排名预估</div>
-      <div style="font-size:14px;color:var(--txt);margin-bottom:12px;line-height:1.6">
-        你超过了<b>${_stuGrade}</b>约 <span style="font-size:20px;font-weight:800;color:var(--primary)">${pctile}%</span> 的同学，处于前 <span style="font-size:20px;font-weight:800;color:${topPct<=10?'var(--ok)':topPct<=30?'var(--primary)':topPct<=60?'var(--warn)':'var(--err)'}">${topPct}%</span> 的位置
-      </div>
-      <div id="pyramidWrap" style="display:flex;justify-content:center"></div>
-    </div>`;
-  }
+  const gapWords=WORDS.length-totalM;
+  const potentialPts=Math.min(25,Math.round(gapWords/WORDS.length*33));
 
-  // ── Summary ──
-  h+=`<div class="card fade"><div class="card-t">诊断概览</div>
-    <div class="wgrid">
-      <div class="wbox"><div class="n">${total}</div><div class="l">作答题数</div></div>
-      <div class="wbox"><div class="n">${Math.round(correct/total*100)}%</div><div class="l">正确率</div></div>
-      <div class="wbox"><div class="n">~${totalM}</div><div class="l">估计掌握词数</div></div>
-      <div class="wbox"><div class="n">${mm}分${ss}秒</div><div class="l">用时</div></div>
-    </div>
-    <div style="font-size:12px;color:var(--gray);margin-top:4px">
-      不确定/超时 ${unsure}题 &middot; 犹豫正确 ${slowCorrect}题 &middot; 平均反应 ${avgTime}s</div>
+  let h='';
+
+  // ══════ 1. 封面成绩卡（可晒核心） ══════
+  h+=`<div class="card fade" style="background:linear-gradient(135deg,#eef0ff,#f5f0ff);border:2px solid var(--primary);text-align:center;padding:28px 22px">
+    <div style="font-size:13px;color:var(--gray)">${_stuGrade} · ${_stuName}</div>
+    <div style="font-size:42px;font-weight:900;color:var(--primary);margin:8px 0">~${totalM}<span style="font-size:16px;font-weight:600">词</span></div>
+    <div style="font-size:14px;color:#7c3aed;font-weight:700;margin-bottom:6px">相当于${equivGrade}的单词水平</div>
+    ${pctile!==null?`<div style="display:inline-block;padding:6px 18px;border-radius:20px;background:${pctile>=70?'#ecfdf5':'#fffbeb'};color:${pctile>=70?'#10b981':'#f59e0b'};font-size:15px;font-weight:800">超过同年级 ${pctile}% 的同学</div>`:''}
+    ${compareText?`<div style="margin-top:10px;font-size:14px;font-weight:700;color:${compareColor}">${compareIcon} ${compareText}</div>`:''}
+    <div style="margin-top:8px;font-size:11px;color:var(--gray)">样本覆盖142套中考真题 · 可信度${total>=25?'A':total>=15?'B':'C'}</div>
   </div>`;
 
-  // ── Coverage ──
-  h+=`<div class="card fade">
-    <div class="sc-hdr"><div class="sc-t">覆盖分 (Coverage Score)</div><div class="sc-v ${covCls}">${covScore}%</div></div>
-    <div class="sbar"><div class="sbar-f ${covCls}" style="width:${covScore}%"></div></div>
-    <div class="sc-d">已掌握词汇覆盖了考试中约 ${covScore}% 的词汇出现频次（目标: 95%）</div>
-    <div class="card-t mt14">各层级掌握率</div>
-    <div class="tier-g">
+  // ══════ 2. 诊断结论卡 ══════
+  const mainIssue=covScore<60?'高频词覆盖严重不足，大量考试核心词尚未掌握':
+    covScore<80?(fastRate<50?'中频词覆盖断层 + 高频词识别速度偏慢':'中频词覆盖存在断层，需要定向补齐'):
+    (fastRate<60?'词汇量已达标，但识别速度偏慢，实战中可能反应不及':'词汇基础扎实，继续保持并关注低频难点');
+  h+=`<div class="card fade" style="border-left:4px solid var(--primary)">
+    <div style="font-size:15px;font-weight:800;color:var(--txt);line-height:1.6;margin-bottom:6px">诊断结论</div>
+    <div style="font-size:14px;color:var(--txt);line-height:1.7">
+      你的短板<b style="color:var(--primary)">不是"不够努力"</b>，而是——<br>
+      <b style="color:${covScore<60?'var(--err)':covScore<80?'var(--warn)':'var(--ok)'}">${mainIssue}</b>
+    </div>
+    ${potentialPts>3?`<div style="margin-top:8px;padding:8px 12px;border-radius:8px;background:#fef2f2;font-size:13px;color:#dc2626;font-weight:600">预计提分潜力：+${potentialPts}分（通过精准补齐词汇缺口）</div>`:''}
+  </div>`;
+
+  // ══════ 3. 核心三分卡 ══════
+  h+=`<div class="card fade"><div class="card-t">核心指标</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin:10px 0">
+      <div style="text-align:center;padding:14px 8px;border-radius:10px;background:${covCls==='hi'?'#ecfdf5':covCls==='mi'?'#fffbeb':'#fef2f2'}">
+        <div style="font-size:10px;color:var(--gray);font-weight:600">词频覆盖率</div>
+        <div style="font-size:28px;font-weight:900;color:${covCls==='hi'?'var(--ok)':covCls==='mi'?'var(--warn)':'var(--err)'}">${covScore}%</div>
+        <div style="font-size:10px;color:var(--gray)">目标 95%</div>
+      </div>
+      <div style="text-align:center;padding:14px 8px;border-radius:10px;background:${fastRate>=60?'#ecfdf5':fastRate>=40?'#fffbeb':'#fef2f2'}">
+        <div style="font-size:10px;color:var(--gray);font-weight:600">快速识别率</div>
+        <div style="font-size:28px;font-weight:900;color:${mc(fastRate)}">${fastRate}%</div>
+        <div style="font-size:10px;color:var(--gray)">${SLOW_THRESHOLD}s内正确</div>
+      </div>
+      <div style="text-align:center;padding:14px 8px;border-radius:10px;background:${avgPct>=75?'#ecfdf5':avgPct>=50?'#fffbeb':'#fef2f2'}">
+        <div style="font-size:10px;color:var(--gray);font-weight:600">题型得分预估</div>
+        <div style="font-size:28px;font-weight:900;color:${riskCls==='hi'?'var(--ok)':riskCls==='mi'?'var(--warn)':'var(--err)'}">${avgPct}%</div>
+        <div style="font-size:10px;color:var(--gray)">${riskLvl}</div>
+      </div>
+    </div>
+    <div class="tier-g" style="margin-top:8px">
       ${['S','A','B','C'].map(t=>{
         const r=Math.round(tierRates[t]*100);
         const cls=t==='S'?'ts':t==='A'?'ta':t==='B'?'tb':'tc';
@@ -1044,140 +1038,53 @@ function finishTest(){
     </div>
   </div>`;
 
-  // ── Mastery ──
-  h+=`<div class="card fade"><div class="card-t">掌握分 (Mastery Score)</div>
-    <div class="mrow"><div class="mlab">快速识别</div>
-      <div class="mbar"><div class="mbar-i" style="width:${fastRate}%;background:${mc(fastRate)}"></div></div>
-      <div class="mpct" style="color:${mc(fastRate)}">${fastRate}%</div>
-      <div class="mconf">置信:${fastConf}</div></div>
-    <div class="mrow"><div class="mlab">含犹豫正确</div>
-      <div class="mbar"><div class="mbar-i" style="width:${confidentRate}%;background:${mc(confidentRate)}"></div></div>
-      <div class="mpct" style="color:${mc(confidentRate)}">${confidentRate}%</div>
-      <div class="mconf">置信:${slowConf}</div></div>
-    <div class="sc-d mt8">快速识别 = ${SLOW_THRESHOLD}s内正确作答；犹豫正确 = 超过${SLOW_THRESHOLD}s但答对（可能存在猜测）</div>
+  // ══════ 4. 中考题型风险卡 ══════
+  const riskColor=v=>v>=75?'#10b981':v>=50?'#f59e0b':'#ef4444';
+  const riskTag=v=>v>=75?'低风险':v>=50?'中风险':'高风险';
+  h+=`<div class="card fade"><div class="card-t">中考题型风险预测</div>
+    <div style="font-size:12px;color:var(--gray);margin-bottom:10px">若不进行针对性训练，预估各题型词汇相关得分率：</div>
+    ${[{name:'完形填空',val:clozePct},{name:'语法填空',val:gramPct},{name:'阅读理解',val:readPct}].map(d=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)">
+        <div style="width:60px;font-size:13px;font-weight:600">${d.name}</div>
+        <div style="flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${d.val}%;background:${riskColor(d.val)};border-radius:4px"></div>
+        </div>
+        <div style="width:40px;text-align:right;font-size:14px;font-weight:800;color:${riskColor(d.val)}">${d.val}%</div>
+        <div style="font-size:10px;padding:2px 8px;border-radius:10px;background:${d.val>=75?'#ecfdf5':d.val>=50?'#fffbeb':'#fef2f2'};color:${riskColor(d.val)};font-weight:600">${riskTag(d.val)}</div>
+      </div>`).join('')}
+    <div id="riskRingsWrap" style="display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:14px"></div>
   </div>`;
 
-  // ── Risk ──
-  h+=`<div class="card fade">
-    <div class="sc-hdr"><div class="sc-t">风险分 (Risk Score)</div><div class="sc-v ${riskCls}">${riskLvl}</div></div>
-    <div class="sc-d mb14">基于词汇掌握情况预估的得分率：</div>
-    <div class="ri"><div class="ri-t">完形填空</div>
-      <div class="ri-bar"><div class="ri-bar-i" style="width:${clozePct}%"></div></div>
-      <div class="ri-p">${clozePct}%</div></div>
-    <div class="ri"><div class="ri-t">语法填空</div>
-      <div class="ri-bar"><div class="ri-bar-i" style="width:${gramPct}%"></div></div>
-      <div class="ri-p">${gramPct}%</div></div>
-    <div class="ri"><div class="ri-t">阅读理解</div>
-      <div class="ri-bar"><div class="ri-bar-i" style="width:${readPct}%"></div></div>
-      <div class="ri-p">${readPct}%</div></div>
-    <div id="riskRingsWrap" style="display:flex;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:16px"></div>
-  </div>`;
-
-  // Draw four ring charts
+  // Draw ring charts
   setTimeout(()=>{
     const wrap=document.getElementById('riskRingsWrap');
     if(!wrap)return;
     const avgPctVal=Math.round((clozePct+gramPct+readPct)/3);
-    const rings=[
-      {label:'完形填空',value:clozePct,color:'#4361ee'},
-      {label:'语法填空',value:gramPct,color:'#7c3aed'},
-      {label:'阅读理解',value:readPct,color:'#10b981'},
-      {label:'平均',value:avgPctVal,color:'#f59e0b'}
-    ];
-    rings.forEach(d=>{
+    [{label:'完形填空',value:clozePct,color:'#4361ee'},{label:'语法填空',value:gramPct,color:'#7c3aed'},{label:'阅读理解',value:readPct,color:'#10b981'},{label:'平均',value:avgPctVal,color:'#f59e0b'}].forEach(d=>{
       const sz=120,lw=10,r=(sz-lw)/2-14,cx=sz/2,cy=sz/2-4;
-      const cv=document.createElement('canvas');
-      cv.width=sz;cv.height=sz;
+      const cv=document.createElement('canvas');cv.width=sz;cv.height=sz;
       const c=cv.getContext('2d');
-      // background ring
-      c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);
-      c.strokeStyle='#e2e8f0';c.lineWidth=lw;c.lineCap='round';c.stroke();
-      // filled arc
-      const end=-Math.PI/2+(d.value/100)*Math.PI*2;
-      c.beginPath();c.arc(cx,cy,r,-Math.PI/2,end);
-      c.strokeStyle=d.color;c.lineWidth=lw;c.lineCap='round';c.stroke();
-      // percentage text
-      c.fillStyle='#1e293b';c.font='bold 18px -apple-system,sans-serif';c.textAlign='center';c.textBaseline='middle';
-      c.fillText(d.value+'%',cx,cy);
-      // label below ring
-      c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';c.textAlign='center';
-      c.fillText(d.label,cx,sz-6);
+      c.beginPath();c.arc(cx,cy,r,0,Math.PI*2);c.strokeStyle='#e2e8f0';c.lineWidth=lw;c.lineCap='round';c.stroke();
+      c.beginPath();c.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+(d.value/100)*Math.PI*2);c.strokeStyle=d.color;c.lineWidth=lw;c.lineCap='round';c.stroke();
+      c.fillStyle='#1e293b';c.font='bold 18px -apple-system,sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillText(d.value+'%',cx,cy);
+      c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';c.fillText(d.label,cx,sz-6);
       wrap.appendChild(cv);
     });
   },0);
 
-  // Draw pyramid chart
-  if(pctile!==null) setTimeout(()=>{
-    const wrap=document.getElementById('pyramidWrap');
-    if(!wrap)return;
-    const topPct=100-pctile;
-    const cv=document.createElement('canvas');
-    const W=380,H=260;
-    cv.width=W;cv.height=H;
-    const c=cv.getContext('2d');
-    // Pyramid layers from top (best) to bottom
-    const layers=[
-      {label:'前5%',lo:0,hi:5,color:'#10b981'},
-      {label:'前5-15%',lo:5,hi:15,color:'#22d3ee'},
-      {label:'前15-30%',lo:15,hi:30,color:'#4361ee'},
-      {label:'前30-50%',lo:30,hi:50,color:'#7c3aed'},
-      {label:'前50-75%',lo:50,hi:75,color:'#f59e0b'},
-      {label:'后25%',lo:75,hi:100,color:'#ef4444'}
-    ];
-    const pyramidW=240;
-    const gap=2,topW=0,botW=pyramidW,py=24;
-    const n=layers.length;
-    const totalH=H-py-10;
-    const layerH=totalH/n;
-    const cx=W/2;
-    // Width at boundary i (0=tip, n=base): linear from topW to botW
-    function bw(i){return topW+(botW-topW)*(i/n)}
-    layers.forEach((l,i)=>{
-      const y=py+i*layerH;
-      const tw=bw(i);   // top edge width of this layer
-      const bwi=bw(i+1); // bottom edge width of this layer
-      const isMe=topPct>=l.lo&&topPct<l.hi;
-      c.fillStyle=isMe?l.color:'#e2e8f0';
-      // trapezoid shape (tip layer becomes a triangle when tw=0)
-      c.beginPath();
-      if(tw<=0){
-        c.moveTo(cx,y);
-      }else{
-        c.moveTo(cx-tw/2+gap,y);c.lineTo(cx+tw/2-gap,y);
-      }
-      c.lineTo(cx+bwi/2-gap,y+layerH-gap);c.lineTo(cx-bwi/2+gap,y+layerH-gap);
-      c.closePath();c.fill();
-      // label
-      c.fillStyle=isMe?'#fff':'#94a3b8';
-      c.font=isMe?'bold 11px -apple-system,sans-serif':'11px -apple-system,sans-serif';
-      c.textAlign='center';c.textBaseline='middle';
-      c.fillText(l.label,cx,y+layerH/2);
-      // marker
-      if(isMe){
-        const midW=(tw+bwi)/2;
-        c.fillStyle=l.color;c.font='bold 12px -apple-system,sans-serif';c.textAlign='left';
-        c.fillText('◄ 你在这里',(cx+midW/2-gap)+6,y+layerH/2);
-      }
-    });
-    // title
-    c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';c.textAlign='center';
-    c.fillText('年级词汇量分布',W/2,14);
-    wrap.appendChild(cv);
-  },0);
-
-  // ── High-risk word list ──
+  // ══════ 5. 高价值缺口词卡（Top 15） ══════
   if(wrongWords.length){
     const show=Math.min(wrongWords.length,15);
-    h+=`<div class="card fade"><div class="card-t">高危词清单（按提分效用排序）</div>
-      <table class="wlt"><thead><tr><th>#</th><th>单词</th><th>释义</th><th>层级</th><th>状态</th><th>效用</th></tr></thead>
+    h+=`<div class="card fade"><div class="card-t">最值得优先学习的 ${show} 个单词</div>
+      <div style="font-size:12px;color:var(--gray);margin-bottom:8px">按中考提分效用排序 · 优先掌握这些词能最快提升成绩</div>
+      <table class="wlt"><thead><tr><th>#</th><th>单词</th><th>释义</th><th>层级</th><th>提分效用</th></tr></thead>
       <tbody id="rwt">`;
     wrongWords.slice(0,show).forEach((ww,i)=>{
       const stars=ww.utility>2?'★★★★★':ww.utility>1.2?'★★★★☆':ww.utility>.6?'★★★☆☆':'★★☆☆☆';
       const bc='badge-'+ww.tier.toLowerCase();
       const cn=ww.word.cn.split('\n')[0];
-      const st=ww.timeout?'超时':ww.unsure?'不确定':ww.score>0?`慢(${ww.elapsed}s)`:'答错';
       h+=`<tr><td>${i+1}</td><td class="wc">${ww.word.w}</td><td class="cc" title="${cn}">${cn}</td>
-        <td><span class="badge ${bc}">${ww.tier}</span></td><td style="font-size:11px">${st}</td>
+        <td><span class="badge ${bc}">${ww.tier}</span></td>
         <td class="stars">${stars}</td></tr>`;
     });
     h+=`</tbody></table>`;
@@ -1188,73 +1095,116 @@ function finishTest(){
     window._ww=wrongWords;
   }
 
-  // ── Study recommendation ──
-  h+=`<div class="card fade">
-    <div class="card-t">学习建议：从词频表第 ${studyStartRank} 位开始</div>
-    <div style="font-size:13px;color:var(--gray);margin-bottom:10px">
-      根据诊断结果，我们估计你已基本掌握中考词频表前 <b>${studyStartRank}</b> 个高频词（共3098词）。
-      建议你从词频表大约第 <b>${studyStartRank}</b> 位开始，向后学习你尚未掌握的单词，在学习的过程中优先学习频率相对更高的单词。同时也建议你向前复习你已经掌握的单词，由于高频的单词你会掌握得更好，因此在复习过程中你需要优先复习频率相对较低的单词。
+  // ══════ 6. 提分路线图卡 ══════
+  h+=`<div class="card fade" style="border-left:4px solid var(--ok)">
+    <div class="card-t" style="color:var(--ok)">你的专属提分路线图</div>
+    <div style="font-size:13px;color:var(--txt);line-height:1.8">
+      <div style="padding:10px 12px;background:#ecfdf5;border-radius:8px;margin-bottom:8px">
+        <b style="color:#10b981">第1周：补齐高频盲区</b><br>
+        <span style="color:var(--gray);font-size:12px">从词频表第 <b>${studyStartRank}</b> 位开始，每天学习 20-30 个高频词，优先攻克 S·核心 和 A·常见 层级的薄弱词汇。</span>
+      </div>
+      <div style="padding:10px 12px;background:#eff6ff;border-radius:8px;margin-bottom:8px">
+        <b style="color:#4361ee">第2-4周：提速训练 + 易混词辨析</b><br>
+        <span style="color:var(--gray);font-size:12px">已掌握的高频词需要提升识别速度（目标：${SLOW_THRESHOLD}s内反应），同时向前复习，优先复习频率较低的已掌握词汇。</span>
+      </div>
+      <div style="padding:10px 12px;background:#faf5ff;border-radius:8px">
+        <b style="color:#7c3aed">持续巩固：定期复测 + 查漏补缺</b><br>
+        <span style="color:var(--gray);font-size:12px">每 2 周复测一次，追踪 Coverage 从 ${covScore}% → 95% 的进度，精准补缺。</span>
+      </div>
     </div>
-    <div style="font-size:12px;color:var(--gray);margin-bottom:6px">该位置附近的单词：</div>
-    <table class="wlt"><thead><tr><th>词频排名</th><th>单词</th><th>音标</th><th>释义</th><th>层级</th></tr></thead><tbody>
-    ${nearbyWords.map(nw=>{
-      const bc='badge-'+nw.tier.toLowerCase();
-      const cn=nw.cn.split('\n')[0];
-      const isCut=nw.idx+1===studyStartRank;
-      return `<tr style="${isCut?'background:#eef0ff;font-weight:700':''}">
-        <td>${nw.idx+1}</td><td class="wc">${nw.w}</td><td style="font-size:11px;color:var(--gray)">${nw.p||''}</td>
-        <td class="cc" title="${cn}">${cn}</td>
-        <td><span class="badge ${bc}">${nw.tier}</span></td></tr>`;
-    }).join('')}
-    </tbody></table>
   </div>`;
 
-  // ── Confidence note ──
-  h+=`<div class="card fade"><div class="cnote">
-    <b>诊断置信度说明</b><br>
-    本次测试基于 ${total} 道题的启发式诊断，非标准化考试。每题限时${TIME_LIMIT}秒，超过${SLOW_THRESHOLD}秒的正确作答会被降权评估（可能存在猜测或排除法）。
-    层级掌握率基于抽样估计，随测试题数增加精度提升。
-  </div></div>`;
+  // ══════ 7. 科学依据卡（精简3点） ══════
+  h+=`<div class="card fade">
+    <div class="card-t">科学依据</div>
+    <div style="font-size:12px;color:var(--gray);line-height:1.8">
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px"><span style="color:var(--primary);font-weight:800">①</span> <span><b>数据来源</b>：142 份全国各省中考真题，提取 3098 个考试词汇及词频</span></div>
+      <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px"><span style="color:var(--primary);font-weight:800">②</span> <span><b>测评方法</b>：三轮自适应算法（广度扫描→聚焦探测→薄弱确认），结合反应时间置信度分析</span></div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><span style="color:var(--primary);font-weight:800">③</span> <span><b>诊断精度</b>：基于 ${total} 题抽样估计，置信等级 ${total>=25?'A（高）':total>=15?'B（中）':'C（低）'}，题数越多精度越高</span></div>
+    </div>
+  </div>`;
 
-  // ── Share & CTA card ──
-  const beatPct=Math.min(99,Math.max(5,Math.round(covScore*1.05)));
-  const gapWords=WORDS.length-totalM;
-  const shareTitle=covScore>=80?'词汇覆盖率${covScore}%，我已领先大多数考生':
-    covScore>=60?'测了才知道，我的中考词汇还有${gapWords}个缺口':'中考词汇诊断结果出来了，有点慌...';
+  // ══════ 8. 课程匹配卡（软转化） ══════
+  const reason1=covScore<80?'你的高频词覆盖存在缺口，需要按真题词频优先级精准补齐':'你的词汇量已达标，需要提速训练让知识转化为考场实力';
+  const reason2=fastRate<60?'识别速度偏慢，需要限时训练提升反应速度':'词汇基础扎实，可以聚焦中低频词的精准突破';
+  const reason3='基于142套真题词频数据定制学习路径，避免"背过的没考、要考的没背"';
+  h+=`<div class="card fade" style="background:linear-gradient(135deg,#ecfdf5,#eff6ff);border:2px solid var(--ok)">
+    <div class="card-t" style="color:var(--ok)">为什么土妹的词汇课适合你？</div>
+    <div style="font-size:13px;color:var(--txt);line-height:1.8">
+      <div style="margin-bottom:6px">✅ ${reason1}</div>
+      <div style="margin-bottom:6px">✅ ${reason2}</div>
+      <div>✅ ${reason3}</div>
+    </div>
+    <div style="margin-top:10px;text-align:center;font-size:12px;color:var(--gray)">不是"多背就好"，而是<b style="color:var(--primary)">用对方法、背对单词</b></div>
+  </div>`;
 
+  // ══════ 9. 挑战传播卡 ══════
   h+=`<div class="card fade share-card">
-    <div class="share-hook">${covScore>=80?'你的词汇储备超过了约'+beatPct+'%的测试者':'你和满分之间，差的不是努力，是'+gapWords+'个词'}</div>
-    <div class="share-sub">${covScore>=80?'但别松懈——高分段的对手也在冲刺，看看谁先到95%':'好消息是：AI已经帮你找出了最该背的词，按优先级来，效率翻倍'}</div>
-    <div class="share-stats">
-      <div class="share-chip gold"><div class="sv">${covScore}%</div><div class="sl">词频覆盖率</div></div>
-      <div class="share-chip blue"><div class="sv">~${totalM}</div><div class="sl">已掌握</div></div>
-      <div class="share-chip green"><div class="sv">${gapWords}</div><div class="sl">待突破</div></div>
+    <div style="text-align:center;margin-bottom:12px">
+      <div style="font-size:16px;font-weight:800;color:var(--txt)">${covScore>=80?'我的词汇覆盖率 '+covScore+'%，你敢来挑战吗？':'我和满分之间，还差 '+gapWords+' 个词，开始冲刺！'}</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:4px">#中考词汇挑战 · 求监督</div>
+    </div>
+    <div class="share-stats" style="display:flex;justify-content:center;gap:12px;margin-bottom:14px">
+      <div style="text-align:center;padding:10px 16px;background:var(--bg);border-radius:10px">
+        <div style="font-size:22px;font-weight:800;color:var(--primary)">${covScore}%</div><div style="font-size:10px;color:var(--gray)">覆盖率</div></div>
+      <div style="text-align:center;padding:10px 16px;background:var(--bg);border-radius:10px">
+        <div style="font-size:22px;font-weight:800;color:#7c3aed">~${totalM}</div><div style="font-size:10px;color:var(--gray)">已掌握</div></div>
+      <div style="text-align:center;padding:10px 16px;background:var(--bg);border-radius:10px">
+        <div style="font-size:22px;font-weight:800;color:var(--ok)">${gapWords}</div><div style="font-size:10px;color:var(--gray)">待突破</div></div>
     </div>
     <div class="share-btns">
-      <button class="btn-share btn-wechat" onclick="shareToMoments()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 01.213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 00.167-.054l1.903-1.114a.864.864 0 01.717-.098 10.16 10.16 0 002.837.403c.276 0 .543-.027.811-.05a6.08 6.08 0 01-.235-1.65c0-3.706 3.357-6.71 7.497-6.71.256 0 .507.015.76.035C16.648 4.857 13.025 2.188 8.69 2.188zM5.785 5.99a1.09 1.09 0 011.083 1.09 1.09 1.09 0 01-1.083 1.09 1.09 1.09 0 01-1.084-1.09 1.09 1.09 0 011.084-1.09zm5.813 0a1.09 1.09 0 011.084 1.09 1.09 1.09 0 01-1.084 1.09 1.09 1.09 0 01-1.083-1.09 1.09 1.09 0 011.083-1.09zm4.167 2.77c-3.627 0-6.573 2.624-6.573 5.86 0 3.238 2.946 5.862 6.573 5.862a7.89 7.89 0 002.21-.315.674.674 0 01.56.076l1.485.87a.252.252 0 00.13.042.227.227 0 00.226-.228c0-.056-.023-.11-.038-.166l-.305-1.153a.46.46 0 01.166-.518C22.927 17.9 24 16.142 24 14.12c0-3.236-2.946-5.86-6.573-5.86h-.662zm-2.478 2.79a.85.85 0 01.847.852.85.85 0 01-.847.851.85.85 0 01-.848-.851.85.85 0 01.848-.852zm4.294 0a.85.85 0 01.848.852.85.85 0 01-.848.851.85.85 0 01-.847-.851.85.85 0 01.847-.852z"/></svg>
-        生成分享图 &rarr; 发朋友圈/抖音/小红书
-      </button>
-      <div style="font-size:12px;color:#8b949e;text-align:center;margin:2px 0 8px;line-height:1.5;letter-spacing:.3px">
-        <span style="color:#60a5fa;font-weight:700">公开打卡 = 社交监督</span><br>让朋友见证你迈向下一个高度
-      </div>
       <button class="btn-share btn-dl" onclick="downloadReport()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        下载完整报告长图
+        下载完整报告长图 → 发朋友圈/小红书
       </button>
+      <div style="font-size:12px;color:var(--gray);text-align:center;margin:4px 0 8px">
+        <b style="color:var(--primary)">公开打卡 = 社交监督</b> · 让朋友见证你的进步
+      </div>
       <button class="btn-share btn-tutor" onclick="contactTutor()">
-        联系土妹 &rarr; 获得你的专属词汇提升计划
+        联系土妹 → 获得你的专属词汇提升计划
       </button>
     </div>
     <div class="social-proof">已有 ${(function(){const t0=1713139200000,tp=1776384000000,now=Date.now(),hp=Math.floor((tp-t0)/3600000),hrs=Math.floor((now-t0)/3600000);let s=0;for(let i=0;i<hp;i++){const h=(i*2654435761)>>>0;s+=0.7+((h%1600)/1000)}const r1=254/s,r3=r1*3;let n=0;for(let i=0;i<hrs;i++){const h=(i*2654435761)>>>0;n+=(0.7+((h%1600)/1000))*(i<hp?r1:r3)}return Math.floor(1200+n)})().toLocaleString()} 名同学完成测试并分享了自己的学习进度</div>
   </div>`;
 
-  // Store stats for share card generation
-  window._reportStats={
-    cov:covScore,mastered:totalM,gap:WORDS.length-totalM,
-    tiers:{S:Math.round(tierRates['S']*100),A:Math.round(tierRates['A']*100),
-           B:Math.round(tierRates['B']*100),C:Math.round(tierRates['C']*100)}
-  };
+  // ── Percentile pyramid (if applicable) ──
+  if(pctile!==null){
+    h+=`<div class="card fade" style="text-align:center">
+      <div class="card-t" style="justify-content:center">年级词汇量分布</div>
+      <div id="pyramidWrap" style="display:flex;justify-content:center"></div>
+    </div>`;
+  }
+
+  // Draw pyramid chart
+  if(pctile!==null) setTimeout(()=>{
+    const wrap=document.getElementById('pyramidWrap');
+    if(!wrap)return;
+    const topPct=100-pctile;
+    const cv=document.createElement('canvas');const W=380,H=260;cv.width=W;cv.height=H;
+    const c=cv.getContext('2d');
+    const layers=[{label:'前5%',lo:0,hi:5,color:'#10b981'},{label:'前5-15%',lo:5,hi:15,color:'#22d3ee'},{label:'前15-30%',lo:15,hi:30,color:'#4361ee'},{label:'前30-50%',lo:30,hi:50,color:'#7c3aed'},{label:'前50-75%',lo:50,hi:75,color:'#f59e0b'},{label:'后25%',lo:75,hi:100,color:'#ef4444'}];
+    const pyramidW=240,gap=2,topW=0,botW=pyramidW,py=24,n=layers.length,totalH=H-py-10,layerH=totalH/n,cx=W/2;
+    function bw(i){return topW+(botW-topW)*(i/n)}
+    layers.forEach((l,i)=>{const y=py+i*layerH,tw=bw(i),bwi=bw(i+1),isMe=topPct>=l.lo&&topPct<l.hi;
+      c.fillStyle=isMe?l.color:'#e2e8f0';c.beginPath();
+      if(tw<=0){c.moveTo(cx,y)}else{c.moveTo(cx-tw/2+gap,y);c.lineTo(cx+tw/2-gap,y)}
+      c.lineTo(cx+bwi/2-gap,y+layerH-gap);c.lineTo(cx-bwi/2+gap,y+layerH-gap);c.closePath();c.fill();
+      c.fillStyle=isMe?'#fff':'#94a3b8';c.font=isMe?'bold 11px -apple-system,sans-serif':'11px -apple-system,sans-serif';
+      c.textAlign='center';c.textBaseline='middle';c.fillText(l.label,cx,y+layerH/2);
+      if(isMe){const midW=(tw+bwi)/2;c.fillStyle=l.color;c.font='bold 12px -apple-system,sans-serif';c.textAlign='left';c.fillText('◄ 你在这里',(cx+midW/2-gap)+6,y+layerH/2)}
+    });
+    c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';c.textAlign='center';c.fillText('年级词汇量分布',W/2,14);
+    wrap.appendChild(cv);
+  },0);
+
+  // ── Detail appendix (collapsed feel) ──
+  h+=`<div class="card fade"><div class="cnote" style="font-size:10px;line-height:1.6">
+    <b>测试详情</b>：${total}题 · 正确率${Math.round(correct/total*100)}% · 用时${mm}分${ss}秒 · 不确定${unsure}题 · 犹豫正确${slowCorrect}题 · 平均反应${avgTime}s<br>
+    每题限时${TIME_LIMIT}秒，超过${SLOW_THRESHOLD}秒的正确作答会被降权评估。层级掌握率基于抽样估计，随测试题数增加精度提升。
+  </div></div>`;
+
+  window._reportStats={cov:covScore,mastered:totalM,gap:gapWords,
+    tiers:{S:Math.round(tierRates['S']*100),A:Math.round(tierRates['A']*100),B:Math.round(tierRates['B']*100),C:Math.round(tierRates['C']*100)}};
 
   $('rpt').innerHTML=h;
   window.scrollTo({top:0,behavior:'smooth'});
