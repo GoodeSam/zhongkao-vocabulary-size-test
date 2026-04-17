@@ -1123,21 +1123,27 @@ function finishTest(){
       {label:'后25%',lo:75,hi:100,color:'#ef4444'}
     ];
     const pyramidW=240;
-    const gap=3,topW=50,botW=pyramidW,py=24,px=(W-pyramidW)/2;
+    const gap=2,topW=0,botW=pyramidW,py=24;
+    const n=layers.length;
     const totalH=H-py-10;
-    const layerH=totalH/layers.length;
+    const layerH=totalH/n;
     const cx=W/2;
+    // Width at boundary i (0=tip, n=base): linear from topW to botW
+    function bw(i){return topW+(botW-topW)*(i/n)}
     layers.forEach((l,i)=>{
       const y=py+i*layerH;
-      const frac=i/(layers.length-1);
-      const lw=topW+(botW-topW)*frac;
+      const tw=bw(i);   // top edge width of this layer
+      const bwi=bw(i+1); // bottom edge width of this layer
       const isMe=topPct>=l.lo&&topPct<l.hi;
       c.fillStyle=isMe?l.color:'#e2e8f0';
-      // trapezoid shape
-      const nextW=i<layers.length-1?topW+(botW-topW)*((i+1)/(layers.length-1)):lw;
+      // trapezoid shape (tip layer becomes a triangle when tw=0)
       c.beginPath();
-      c.moveTo(cx-lw/2+gap,y);c.lineTo(cx+lw/2-gap,y);
-      c.lineTo(cx+nextW/2-gap,y+layerH-gap);c.lineTo(cx-nextW/2+gap,y+layerH-gap);
+      if(tw<=0){
+        c.moveTo(cx,y);
+      }else{
+        c.moveTo(cx-tw/2+gap,y);c.lineTo(cx+tw/2-gap,y);
+      }
+      c.lineTo(cx+bwi/2-gap,y+layerH-gap);c.lineTo(cx-bwi/2+gap,y+layerH-gap);
       c.closePath();c.fill();
       // label
       c.fillStyle=isMe?'#fff':'#94a3b8';
@@ -1146,8 +1152,9 @@ function finishTest(){
       c.fillText(l.label,cx,y+layerH/2);
       // marker
       if(isMe){
+        const midW=(tw+bwi)/2;
         c.fillStyle=l.color;c.font='bold 12px -apple-system,sans-serif';c.textAlign='left';
-        c.fillText('◄ 你在这里',(cx+lw/2-gap)+6,y+layerH/2);
+        c.fillText('◄ 你在这里',(cx+midW/2-gap)+6,y+layerH/2);
       }
     });
     // title
