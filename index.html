@@ -1088,7 +1088,7 @@ function finishTest(){
     if(!wrap)return;
     const topPct=100-pctile;
     const cv=document.createElement('canvas');
-    const W=300,H=260;
+    const W=380,H=260;
     cv.width=W;cv.height=H;
     const c=cv.getContext('2d');
     // Pyramid layers from top (best) to bottom
@@ -1100,31 +1100,32 @@ function finishTest(){
       {label:'前50-75%',lo:50,hi:75,color:'#f59e0b'},
       {label:'后25%',lo:75,hi:100,color:'#ef4444'}
     ];
-    const gap=3,topW=60,botW=W-40,py=24;
+    const pyramidW=240;
+    const gap=3,topW=50,botW=pyramidW,py=24,px=(W-pyramidW)/2;
     const totalH=H-py-10;
     const layerH=totalH/layers.length;
+    const cx=W/2;
     layers.forEach((l,i)=>{
       const y=py+i*layerH;
       const frac=i/(layers.length-1);
       const lw=topW+(botW-topW)*frac;
-      const x=(W-lw)/2;
       const isMe=topPct>=l.lo&&topPct<l.hi;
       c.fillStyle=isMe?l.color:'#e2e8f0';
       // trapezoid shape
       const nextW=i<layers.length-1?topW+(botW-topW)*((i+1)/(layers.length-1)):lw;
       c.beginPath();
-      c.moveTo((W-lw)/2+gap,y);c.lineTo((W+lw)/2-gap,y);
-      c.lineTo((W+nextW)/2-gap,y+layerH-gap);c.lineTo((W-nextW)/2+gap,y+layerH-gap);
+      c.moveTo(cx-lw/2+gap,y);c.lineTo(cx+lw/2-gap,y);
+      c.lineTo(cx+nextW/2-gap,y+layerH-gap);c.lineTo(cx-nextW/2+gap,y+layerH-gap);
       c.closePath();c.fill();
       // label
       c.fillStyle=isMe?'#fff':'#94a3b8';
       c.font=isMe?'bold 11px -apple-system,sans-serif':'11px -apple-system,sans-serif';
       c.textAlign='center';c.textBaseline='middle';
-      c.fillText(l.label,W/2,y+layerH/2);
+      c.fillText(l.label,cx,y+layerH/2);
       // marker
       if(isMe){
         c.fillStyle=l.color;c.font='bold 12px -apple-system,sans-serif';c.textAlign='left';
-        c.fillText('◄ 你在这里',((W+lw)/2-gap)+6,y+layerH/2);
+        c.fillText('◄ 你在这里',(cx+lw/2-gap)+6,y+layerH/2);
       }
     });
     // title
