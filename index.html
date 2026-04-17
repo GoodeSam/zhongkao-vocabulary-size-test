@@ -943,6 +943,27 @@ function finishTest(){
     </div>`:''}
   </div>`;
 
+  // ── Percentile ranking ──
+  // Expected vocab (mean, stddev) per grade for percentile estimation
+  const gradeVocab={'小学1年级':[80,40],'小学2年级':[180,60],'小学3年级':[350,90],'小学4年级':[550,120],'小学5年级':[750,150],'小学6年级':[950,180],'初中1年级':[1300,220],'初中2年级':[1700,260],'初中3年级':[2100,300],'高中1年级':[2600,350],'高中2年级':[3100,380],'高中3年级':[3600,400]};
+  function normalCDF(x){const t=1/(1+0.2316419*Math.abs(x)),p=t*(0.319381530+t*(-0.356563782+t*(1.781477937+t*(-1.821255978+1.330274429*t))));const v=1-p*Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);return x>=0?v:1-v}
+  let pctile=null;
+  if(_stuGrade!=='其他'&&gradeVocab[_stuGrade]){
+    const[mu,sigma]=gradeVocab[_stuGrade];
+    const z=(totalM-mu)/sigma;
+    pctile=Math.max(1,Math.min(99,Math.round(normalCDF(z)*100)));
+  }
+  if(pctile!==null){
+    const topPct=100-pctile;
+    h+=`<div class="card fade">
+      <div class="card-t">年级排名预估</div>
+      <div style="font-size:14px;color:var(--txt);margin-bottom:12px;line-height:1.6">
+        你超过了<b>${_stuGrade}</b>约 <span style="font-size:20px;font-weight:800;color:var(--primary)">${pctile}%</span> 的同学，处于前 <span style="font-size:20px;font-weight:800;color:${topPct<=10?'var(--ok)':topPct<=30?'var(--primary)':topPct<=60?'var(--warn)':'var(--err)'}">${topPct}%</span> 的位置
+      </div>
+      <div id="pyramidWrap" style="display:flex;justify-content:center"></div>
+    </div>`;
+  }
+
   // ── Summary ──
   h+=`<div class="card fade"><div class="card-t">诊断概览</div>
     <div class="wgrid">
@@ -1032,6 +1053,57 @@ function finishTest(){
       c.fillText(d.label,cx,sz-6);
       wrap.appendChild(cv);
     });
+  },0);
+
+  // Draw pyramid chart
+  if(pctile!==null) setTimeout(()=>{
+    const wrap=document.getElementById('pyramidWrap');
+    if(!wrap)return;
+    const topPct=100-pctile;
+    const cv=document.createElement('canvas');
+    const W=300,H=260;
+    cv.width=W;cv.height=H;
+    const c=cv.getContext('2d');
+    // Pyramid layers from top (best) to bottom
+    const layers=[
+      {label:'前5%',lo:0,hi:5,color:'#10b981'},
+      {label:'前5-15%',lo:5,hi:15,color:'#22d3ee'},
+      {label:'前15-30%',lo:15,hi:30,color:'#4361ee'},
+      {label:'前30-50%',lo:30,hi:50,color:'#7c3aed'},
+      {label:'前50-75%',lo:50,hi:75,color:'#f59e0b'},
+      {label:'后25%',lo:75,hi:100,color:'#ef4444'}
+    ];
+    const gap=3,topW=60,botW=W-40,py=24;
+    const totalH=H-py-10;
+    const layerH=totalH/layers.length;
+    layers.forEach((l,i)=>{
+      const y=py+i*layerH;
+      const frac=i/(layers.length-1);
+      const lw=topW+(botW-topW)*frac;
+      const x=(W-lw)/2;
+      const isMe=topPct>=l.lo&&topPct<l.hi;
+      c.fillStyle=isMe?l.color:'#e2e8f0';
+      // trapezoid shape
+      const nextW=i<layers.length-1?topW+(botW-topW)*((i+1)/(layers.length-1)):lw;
+      c.beginPath();
+      c.moveTo((W-lw)/2+gap,y);c.lineTo((W+lw)/2-gap,y);
+      c.lineTo((W+nextW)/2-gap,y+layerH-gap);c.lineTo((W-nextW)/2+gap,y+layerH-gap);
+      c.closePath();c.fill();
+      // label
+      c.fillStyle=isMe?'#fff':'#94a3b8';
+      c.font=isMe?'bold 11px -apple-system,sans-serif':'11px -apple-system,sans-serif';
+      c.textAlign='center';c.textBaseline='middle';
+      c.fillText(l.label,W/2,y+layerH/2);
+      // marker
+      if(isMe){
+        c.fillStyle=l.color;c.font='bold 12px -apple-system,sans-serif';c.textAlign='left';
+        c.fillText('◄ 你在这里',((W+lw)/2-gap)+6,y+layerH/2);
+      }
+    });
+    // title
+    c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';c.textAlign='center';
+    c.fillText('年级词汇量分布',W/2,14);
+    wrap.appendChild(cv);
   },0);
 
   // ── High-risk word list ──
