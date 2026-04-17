@@ -187,6 +187,22 @@ table.wlt tr:hover{background:var(--bg)}
 
   <!-- ═══ Welcome ═══ -->
   <div id="S0">
+    <div class="card" style="border-left:4px solid var(--primary)">
+      <div class="card-t">为什么这个测试和你的中考成绩直接相关？</div>
+      <div style="font-size:13px;color:var(--gray);line-height:1.8">
+        <p style="margin-bottom:8px">语言学中的<b>齐普夫法则（Zipf's Law）</b>揭示了一个关键事实：<b>词汇的重要性极不平均</b>。少量高频词覆盖了绝大部分真实语言输入，而大量低频词出现极少。</p>
+        <p style="margin-bottom:8px">我们对 <b>142 份全国中考真题</b>进行了词频统计，数据印证了这一规律：</p>
+        <div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:12px;line-height:1.8">
+          排名第 1 的单词 <b>the</b> 出现了 <b style="color:var(--primary)">22,828</b> 次<br>
+          排名第 1,000 的单词 <b>shake</b> 只出现了 <b>55</b> 次<br>
+          排名第 2,000 的单词 <b>greenhouse</b> 出现了 <b>12</b> 次<br>
+          排名第 3,000 的单词 <b>virtual</b> 仅出现了 <b>2</b> 次
+        </div>
+        <p style="margin-bottom:8px"><b style="color:var(--primary)">因此，单词掌握不仅是"越多越好"，更关键的是彻底掌握高频词汇。</b></p>
+        <p style="margin-bottom:8px">同时，教材和课标中的单词与中考真题<b>并不完全匹配</b>——常常出现"总背的单词没考、考的单词没背"的情况。在有限的备考时间内，<b>尽可能多地掌握中考真题中的高频词汇</b>，才是词汇提分的关键。</p>
+        <p>为了帮助你精准定位自己的词汇掌握情况，我们基于真题词频数据开发了这套诊断系统，并结合诊断结果提供<b>科学有效的单词突击方案</b>。</p>
+      </div>
+    </div>
     <div class="card">
       <div class="card-t">数据基础</div>
       <div class="wgrid">
@@ -931,6 +947,16 @@ function finishTest(){
   }
 
   let h='';
+
+  // ── Scientific basis ──
+  h+=`<div class="card fade" style="border-left:4px solid var(--primary)">
+    <div class="card-t">本次诊断的科学依据</div>
+    <div style="font-size:12px;color:var(--gray);line-height:1.8">
+      <p style="margin-bottom:6px">本诊断基于 <b>142 份全国中考真题</b>的词频统计数据，运用语言学<b>齐普夫法则</b>原理构建。研究表明，中考英语中少量高频词覆盖了绝大部分题目内容——彻底掌握高频词汇比盲目扩大词汇量更能有效提分。</p>
+      <p style="margin-bottom:6px">测试采用<b>三轮自适应算法</b>：广度扫描 → 聚焦探测 → 薄弱确认，结合反应时间与置信度分析，精准定位你的真实词汇水平，而非简单的对错统计。</p>
+      <p>以下报告将为你展示词汇覆盖率、各题型得分预估、年级排名，以及针对性的学习方案。</p>
+    </div>
+  </div>`;
 
   // ── Personalized summary ──
   h+=`<div class="card fade" style="background:linear-gradient(135deg,#eef0ff,#f5f0ff);border:2px solid var(--primary)">
