@@ -1255,16 +1255,19 @@ function downloadReport(){
     <div style="font-size:20px;font-weight:800;color:#4361ee">中考词汇智能诊断报告</div>
     <div style="font-size:11px;color:#64748b;margin-top:2px">基于142套全国中考真题词频数据 · 生成时间：${new Date().toLocaleString('zh-CN')}</div>
   </div>`;
-  // Clone report content (including canvas elements)
+  // Clone report content and upscale canvas elements for sharpness
   const rptEl=$('rpt');
   const rptClone=rptEl.cloneNode(true);
-  // Copy canvas contents
+  const S=3; // match html2canvas scale
   const srcCanvases=rptEl.querySelectorAll('canvas');
   const dstCanvases=rptClone.querySelectorAll('canvas');
   srcCanvases.forEach((sc,i)=>{
     if(dstCanvases[i]){
-      dstCanvases[i].width=sc.width;dstCanvases[i].height=sc.height;
-      const dc=dstCanvases[i].getContext('2d');
+      const dc_el=dstCanvases[i];
+      dc_el.width=sc.width*S;dc_el.height=sc.height*S;
+      dc_el.style.width=sc.width+'px';dc_el.style.height=sc.height+'px';
+      const dc=dc_el.getContext('2d');
+      dc.scale(S,S);
       dc.drawImage(sc,0,0);
     }
   });
