@@ -1268,9 +1268,11 @@ function showAll(){
   const btn=document.querySelector('.show-all-btn');if(btn)btn.remove();
 }
 
-function downloadReport(){
+async function downloadReport(){
   const rptEl=$('rpt');
   const SC=3;
+  const MAX_SIDE=16384;
+  const TILE_CSS_H=1200; // CSS pixels per tile to stay within raster limits
   // Hide buttons and social proof during capture
   const hideEls=rptEl.querySelectorAll('.btn-share,.share-card,.social-proof');
   hideEls.forEach(el=>el.style.display='none');
@@ -1303,53 +1305,63 @@ function downloadReport(){
     </div>
   </div>`;
   rptEl.appendChild(ftr);
-  // Scroll to top so html2canvas sees full element in viewport context
   const savedScroll=window.scrollY;
   window.scrollTo(0,0);
-  // Collect original canvas pixel data before html2canvas clones the DOM
-  const origCanvases=rptEl.querySelectorAll('canvas');
-  const canvasData=[];
-  origCanvases.forEach(sc=>{
-    canvasData.push({w:sc.width,h:sc.height,data:sc.toDataURL()});
-  });
-  html2canvas(rptEl,{
-    scale:SC,
-    useCORS:true,
-    backgroundColor:'#ffffff',
-    scrollX:0,scrollY:0,
-    windowWidth:rptEl.scrollWidth,
-    windowHeight:rptEl.scrollHeight,
-    onclone:function(clonedDoc){
-      // In the cloned document, upscale all canvas elements to match capture scale
-      const clonedCanvases=clonedDoc.querySelectorAll('#rpt canvas');
-      clonedCanvases.forEach((cc,i)=>{
-        if(!canvasData[i])return;
-        const d=canvasData[i];
-        // Set canvas backing size to SC× for sharp rendering
-        cc.width=d.w*SC;cc.height=d.h*SC;
-        cc.style.width=d.w+'px';cc.style.height=d.h+'px';
-        const ctx=cc.getContext('2d');
-        const img=new Image();
-        img.src=d.data;
-        ctx.imageSmoothingEnabled=false;
-        ctx.drawImage(img,0,0,d.w*SC,d.h*SC);
+  try{
+    // Wait for fonts and layout
+    if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    const w=Math.ceil(rptEl.scrollWidth);
+    const h=Math.ceil(rptEl.scrollHeight);
+    // Clamp scale to stay within browser canvas limits
+    const safeScale=Math.min(SC,MAX_SIDE/w,MAX_SIDE/h);
+    const outW=Math.floor(w*safeScale);
+    const outH=Math.floor(h*safeScale);
+    // Collect source canvas refs for sharp upscale in onclone
+    const srcCanvases=[...rptEl.querySelectorAll('canvas')];
+    // Final stitched canvas
+    const finalCv=document.createElement('canvas');
+    finalCv.width=outW;finalCv.height=outH;
+    const fctx=finalCv.getContext('2d');
+    fctx.fillStyle='#fff';fctx.fillRect(0,0,outW,outH);
+    // Render in tiles to avoid exceeding raster limits
+    for(let ty=0;ty<h;ty+=TILE_CSS_H){
+      const tileH=Math.min(TILE_CSS_H,h-ty);
+      const tile=await html2canvas(rptEl,{
+        scale:safeScale,
+        useCORS:true,
+        backgroundColor:'#ffffff',
+        scrollX:0,scrollY:0,
+        x:0,y:ty,
+        width:w,height:tileH,
+        onclone:function(clonedDoc){
+          const cc=clonedDoc.querySelectorAll('#rpt canvas');
+          cc.forEach((c,i)=>{
+            if(!srcCanvases[i])return;
+            const sc=srcCanvases[i];
+            c.width=Math.floor(sc.width*safeScale);
+            c.height=Math.floor(sc.height*safeScale);
+            c.style.width=sc.width+'px';c.style.height=sc.height+'px';
+            const ctx=c.getContext('2d');
+            ctx.imageSmoothingEnabled=false;
+            ctx.drawImage(sc,0,0,c.width,c.height);
+          });
+        }
       });
+      fctx.drawImage(tile,0,Math.floor(ty*safeScale));
     }
-  }).then(canvas=>{
-    canvas.toBlob(blob=>{
+    finalCv.toBlob(blob=>{
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');
-      a.href=url;
-      a.download='中考词汇诊断报告.png';
-      a.click();
-      URL.revokeObjectURL(url);
+      a.href=url;a.download='中考词汇诊断报告.png';
+      a.click();URL.revokeObjectURL(url);
       showShareTip();
     },'image/png');
-  }).finally(()=>{
+  }finally{
     hdr.remove();ftr.remove();
     hideEls.forEach(el=>el.style.display='');
     window.scrollTo(0,savedScroll);
-  });
+  }
 }
 
 function showShareTip(){
