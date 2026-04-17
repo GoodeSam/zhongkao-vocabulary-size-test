@@ -1181,20 +1181,43 @@ function finishTest(){
     const wrap=document.getElementById('pyramidWrap');
     if(!wrap)return;
     const topPct=100-pctile;
-    const cv=document.createElement('canvas');const W=380,H=260;cv.width=W;cv.height=H;
+    const cv=document.createElement('canvas');const W=460,H=270;cv.width=W;cv.height=H;
     const c=cv.getContext('2d');
-    const layers=[{label:'前5%',lo:0,hi:5,color:'#10b981'},{label:'前5-15%',lo:5,hi:15,color:'#22d3ee'},{label:'前15-30%',lo:15,hi:30,color:'#4361ee'},{label:'前30-50%',lo:30,hi:50,color:'#7c3aed'},{label:'前50-75%',lo:50,hi:75,color:'#f59e0b'},{label:'后25%',lo:75,hi:100,color:'#ef4444'}];
-    const pyramidW=240,gap=2,topW=0,botW=pyramidW,py=24,n=layers.length,totalH=H-py-10,layerH=totalH/n,cx=W/2;
-    function bw(i){return topW+(botW-topW)*(i/n)}
-    layers.forEach((l,i)=>{const y=py+i*layerH,tw=bw(i),bwi=bw(i+1),isMe=topPct>=l.lo&&topPct<l.hi;
-      c.fillStyle=isMe?l.color:'#e2e8f0';c.beginPath();
-      if(tw<=0){c.moveTo(cx,y)}else{c.moveTo(cx-tw/2+gap,y);c.lineTo(cx+tw/2-gap,y)}
-      c.lineTo(cx+bwi/2-gap,y+layerH-gap);c.lineTo(cx-bwi/2+gap,y+layerH-gap);c.closePath();c.fill();
-      c.fillStyle=isMe?'#fff':'#94a3b8';c.font=isMe?'bold 11px -apple-system,sans-serif':'11px -apple-system,sans-serif';
-      c.textAlign='center';c.textBaseline='middle';c.fillText(l.label,cx,y+layerH/2);
-      if(isMe){const midW=(tw+bwi)/2;c.fillStyle=l.color;c.font='bold 12px -apple-system,sans-serif';c.textAlign='left';c.fillText('◄ 你在这里',(cx+midW/2-gap)+6,y+layerH/2)}
+    const layers=[
+      {label:'前5%',lo:0,hi:5,color:'#10b981'},
+      {label:'前5-15%',lo:5,hi:15,color:'#22d3ee'},
+      {label:'前15-30%',lo:15,hi:30,color:'#4361ee'},
+      {label:'前30-50%',lo:30,hi:50,color:'#7c3aed'},
+      {label:'前50-75%',lo:50,hi:75,color:'#f59e0b'},
+      {label:'后25%',lo:75,hi:100,color:'#ef4444'}
+    ];
+    const pyramidW=180,py=28,n=layers.length,totalH=H-py-10,layerH=totalH/n,cx=W/2;
+    function bw(i){return (pyramidW*(i/n))}
+    layers.forEach((l,i)=>{
+      const y=py+i*layerH,tw=bw(i),bwi=bw(i+1),isMe=topPct>=l.lo&&topPct<l.hi;
+      // Always use the layer's own color (brighter if current, slightly faded if not)
+      c.globalAlpha=isMe?1:0.4;
+      c.fillStyle=l.color;c.beginPath();
+      if(tw<=0){c.moveTo(cx,y)}else{c.moveTo(cx-tw/2+2,y);c.lineTo(cx+tw/2-2,y)}
+      c.lineTo(cx+bwi/2-2,y+layerH-2);c.lineTo(cx-bwi/2+2,y+layerH-2);
+      c.closePath();c.fill();
+      c.globalAlpha=1;
+      // Label on LEFT side
+      const midY=y+layerH/2;
+      const midW=(tw+bwi)/2;
+      c.fillStyle=isMe?l.color:'#94a3b8';
+      c.font=isMe?'bold 12px -apple-system,sans-serif':'11px -apple-system,sans-serif';
+      c.textAlign='right';c.textBaseline='middle';
+      c.fillText(l.label,(cx-midW/2)-10,midY);
+      // "你在这里" marker on RIGHT side
+      if(isMe){
+        c.fillStyle=l.color;c.font='bold 12px -apple-system,sans-serif';c.textAlign='left';
+        c.fillText('► 你在这里',(cx+midW/2)+10,midY);
+      }
     });
-    c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';c.textAlign='center';c.fillText('年级词汇量分布',W/2,14);
+    // Title
+    c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';c.textAlign='center';
+    c.fillText('年级词汇量分布',cx,16);
     wrap.appendChild(cv);
   },0);
 
