@@ -192,6 +192,101 @@ table.wlt tr:hover{background:var(--bg)}
       <div class="card-t">为什么这个测试和你的中考成绩直接相关？</div>
       <div style="font-size:13px;color:var(--gray);line-height:1.8">
         <p style="margin-bottom:8px">语言学中的<b>齐普夫法则（Zipf's Law）</b>揭示了一个关键事实：<b>词汇的重要性极不平均</b>。少量高频词覆盖了绝大部分真实语言输入，而大量低频词出现极少。</p>
+        <div id="zipfChartWrap" style="display:flex;justify-content:center;margin:12px 0"></div>
+        <script>
+        (function(){
+          const cv=document.createElement('canvas');
+          const W=560,H=280,pad={t:36,r:20,b:40,l:56};
+          cv.width=W;cv.height=H;cv.style.width='100%';cv.style.maxWidth=W+'px';cv.style.height='auto';
+          const c=cv.getContext('2d');
+          // Background
+          c.fillStyle='#f8fafc';c.fillRect(0,0,W,H);
+          c.strokeStyle='#e2e8f0';c.lineWidth=1;
+          // Data points (rank, frequency) from real exam stats
+          const data=[
+            {rank:1,freq:22828,word:'the'},
+            {rank:50,freq:1574,word:'will'},
+            {rank:100,freq:890,word:'old'},
+            {rank:200,freq:392,word:'food'},
+            {rank:500,freq:130,word:'angry'},
+            {rank:1000,freq:55,word:'shake'},
+            {rank:2000,freq:12,word:'greenhouse'},
+            {rank:3000,freq:2,word:'virtual'}
+          ];
+          const pw=W-pad.l-pad.r,ph=H-pad.t-pad.b;
+          const maxR=3100,maxF=23000;
+          function tx(r){return pad.l+(r/maxR)*pw}
+          function ty(f){return pad.t+ph-(f/maxF)*ph}
+          // Grid lines
+          c.setLineDash([3,3]);c.strokeStyle='#e2e8f0';
+          for(const f of[5000,10000,15000,20000]){
+            c.beginPath();c.moveTo(pad.l,ty(f));c.lineTo(W-pad.r,ty(f));c.stroke();
+          }
+          c.setLineDash([]);
+          // Axes
+          c.strokeStyle='#94a3b8';c.lineWidth=1.5;
+          c.beginPath();c.moveTo(pad.l,pad.t);c.lineTo(pad.l,H-pad.b);c.lineTo(W-pad.r,H-pad.b);c.stroke();
+          // Filled area under curve
+          c.beginPath();c.moveTo(tx(data[0].rank),ty(data[0].freq));
+          for(let i=1;i<data.length;i++){
+            const p=data[i-1],q=data[i];
+            const cpx=(tx(p.rank)+tx(q.rank))/2;
+            c.quadraticCurveTo(cpx,ty(p.freq),tx(q.rank),ty(q.freq));
+          }
+          c.lineTo(tx(data[data.length-1].rank),ty(0));c.lineTo(tx(data[0].rank),ty(0));c.closePath();
+          const grad=c.createLinearGradient(0,pad.t,0,H-pad.b);
+          grad.addColorStop(0,'rgba(67,97,238,0.25)');grad.addColorStop(1,'rgba(67,97,238,0.02)');
+          c.fillStyle=grad;c.fill();
+          // Curve line
+          c.beginPath();c.moveTo(tx(data[0].rank),ty(data[0].freq));
+          for(let i=1;i<data.length;i++){
+            const p=data[i-1],q=data[i];
+            const cpx=(tx(p.rank)+tx(q.rank))/2;
+            c.quadraticCurveTo(cpx,ty(p.freq),tx(q.rank),ty(q.freq));
+          }
+          c.strokeStyle='#4361ee';c.lineWidth=2.5;c.stroke();
+          // Data points and labels
+          data.forEach((d,i)=>{
+            const x=tx(d.rank),y=ty(d.freq);
+            c.beginPath();c.arc(x,y,4,0,Math.PI*2);c.fillStyle='#4361ee';c.fill();
+            c.fillStyle='#fff';c.beginPath();c.arc(x,y,2,0,Math.PI*2);c.fill();
+            // Label for key points
+            if(i<4||i===data.length-1){
+              c.fillStyle='#1e293b';c.font='bold 10px -apple-system,sans-serif';
+              c.textAlign=i===0?'left':'center';c.textBaseline='bottom';
+              c.fillText(d.word+' ('+d.freq+'次)',x+(i===0?6:0),y-8);
+            }
+          });
+          // Annotations: high-freq zone
+          c.fillStyle='rgba(16,185,129,0.1)';
+          c.fillRect(pad.l,pad.t,tx(200)-pad.l,ph);
+          c.fillStyle='#10b981';c.font='bold 11px -apple-system,sans-serif';
+          c.textAlign='center';c.fillText('高频核心区',pad.l+(tx(200)-pad.l)/2,pad.t+16);
+          // Low-freq zone label
+          c.fillStyle='#ef4444';c.font='10px -apple-system,sans-serif';
+          c.textAlign='center';c.fillText('低频长尾区',(tx(1500)+W-pad.r)/2,pad.t+ph-10);
+          // Axis labels
+          c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';
+          c.textAlign='center';c.fillText('单词频率排名',W/2,H-6);
+          c.save();c.translate(14,pad.t+ph/2);c.rotate(-Math.PI/2);
+          c.fillText('出现次数',0,0);c.restore();
+          // Title
+          c.fillStyle='#1e293b';c.font='bold 13px -apple-system,sans-serif';
+          c.textAlign='center';c.fillText('齐普夫法则：中考真题词频分布',W/2,18);
+          // X axis ticks
+          c.fillStyle='#94a3b8';c.font='10px -apple-system,sans-serif';c.textAlign='center';
+          for(const r of[1,500,1000,1500,2000,2500,3000]){
+            c.fillText(r,tx(r),H-pad.b+14);
+            c.beginPath();c.moveTo(tx(r),H-pad.b);c.lineTo(tx(r),H-pad.b+4);c.strokeStyle='#94a3b8';c.lineWidth=1;c.stroke();
+          }
+          // Y axis ticks
+          c.textAlign='right';
+          for(const f of[0,5000,10000,15000,20000]){
+            c.fillText(f>=1000?(f/1000)+'k':f,pad.l-6,ty(f)+4);
+          }
+          document.getElementById('zipfChartWrap').appendChild(cv);
+        })();
+        </script>
         <p style="margin-bottom:8px">我们对 <b>142 份全国中考真题</b>进行了词频统计，数据印证了这一规律：</p>
         <div style="background:var(--bg);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:12px;line-height:1.8">
           排名第 1 的单词 <b>the</b> 出现了 <b style="color:var(--primary)">22,828</b> 次<br>
