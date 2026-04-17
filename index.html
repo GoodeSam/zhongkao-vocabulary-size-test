@@ -1247,36 +1247,23 @@ function showAll(){
 }
 
 function downloadReport(){
-  // Build an offscreen container with report content + social footer
-  const wrap=document.createElement('div');
-  wrap.style.cssText='position:absolute;left:-9999px;top:0;width:640px;background:#fff;padding:24px;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#1e293b;line-height:1.6';
-  // Header
-  wrap.innerHTML=`<div style="text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #4361ee">
+  // Temporarily inject header and footer into the live report for capture
+  const rptEl=$('rpt');
+  // Hide buttons and social proof during capture
+  const hideEls=rptEl.querySelectorAll('.btn-share,.share-card,.social-proof');
+  hideEls.forEach(el=>el.style.display='none');
+  // Insert header before report content
+  const hdr=document.createElement('div');
+  hdr.id='_capHdr';
+  hdr.innerHTML=`<div style="text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #4361ee">
     <div style="font-size:20px;font-weight:800;color:#4361ee">中考词汇智能诊断报告</div>
     <div style="font-size:11px;color:#64748b;margin-top:2px">基于142套全国中考真题词频数据 · 生成时间：${new Date().toLocaleString('zh-CN')}</div>
   </div>`;
-  // Clone report content and upscale canvas elements for sharpness
-  const rptEl=$('rpt');
-  const rptClone=rptEl.cloneNode(true);
-  const S=3; // match html2canvas scale
-  const srcCanvases=rptEl.querySelectorAll('canvas');
-  const dstCanvases=rptClone.querySelectorAll('canvas');
-  srcCanvases.forEach((sc,i)=>{
-    if(dstCanvases[i]){
-      const dc_el=dstCanvases[i];
-      dc_el.width=sc.width*S;dc_el.height=sc.height*S;
-      dc_el.style.width=sc.width+'px';dc_el.style.height=sc.height+'px';
-      const dc=dc_el.getContext('2d');
-      dc.scale(S,S);
-      dc.drawImage(sc,0,0);
-    }
-  });
-  // Remove buttons/share-card from clone
-  rptClone.querySelectorAll('.btn-share,.share-card,.social-proof').forEach(el=>el.remove());
-  wrap.appendChild(rptClone);
-  // Social footer
-  const footer=document.createElement('div');
-  footer.innerHTML=`<div style="border:2px solid #4361ee;border-radius:10px;padding:18px;margin:14px 0;text-align:center">
+  rptEl.insertBefore(hdr,rptEl.firstChild);
+  // Append social footer
+  const ftr=document.createElement('div');
+  ftr.id='_capFtr';
+  ftr.innerHTML=`<div style="border:2px solid #4361ee;border-radius:10px;padding:18px;margin:14px 0;text-align:center">
     <div style="font-size:16px;font-weight:800;color:#4361ee;margin-bottom:6px">把这份报告晒出去，让朋友们监督你的进步</div>
     <div style="font-size:12px;color:#1e293b;line-height:1.8;margin-bottom:10px">
       发到<b>微信朋友圈</b>、<b>抖音</b>或<b>小红书</b>，记录你此刻的词汇水平。<br>
@@ -1293,10 +1280,9 @@ function downloadReport(){
       </div>
     </div>
   </div>`;
-  wrap.appendChild(footer);
-  document.body.appendChild(wrap);
-  // Use html2canvas to capture
-  html2canvas(wrap,{scale:3,useCORS:true,backgroundColor:'#ffffff',width:640}).then(canvas=>{
+  rptEl.appendChild(ftr);
+  // Capture the live on-screen report directly
+  html2canvas(rptEl,{scale:3,useCORS:true,backgroundColor:'#ffffff'}).then(canvas=>{
     canvas.toBlob(blob=>{
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');
@@ -1306,8 +1292,11 @@ function downloadReport(){
       URL.revokeObjectURL(url);
       showShareTip();
     },'image/png');
-    wrap.remove();
-  }).catch(()=>{wrap.remove()});
+  }).finally(()=>{
+    // Clean up: remove injected elements, restore hidden ones
+    hdr.remove();ftr.remove();
+    hideEls.forEach(el=>el.style.display='');
+  });
 }
 
 function showShareTip(){
