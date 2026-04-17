@@ -987,7 +987,7 @@ function finishTest(){
 
   // ══════ 1. 封面成绩卡（可晒核心） ══════
   h+=`<div class="card fade" style="background:linear-gradient(135deg,#eef0ff,#f5f0ff);border:2px solid var(--primary);text-align:center;padding:28px 22px">
-    <div style="font-size:13px;color:var(--gray)">${_stuGrade} · ${_stuName}</div>
+    <div style="font-size:20px;font-weight:800;color:var(--txt)">${_stuName} <span style="font-size:15px;font-weight:700;color:var(--primary);background:var(--primary-lt);padding:3px 12px;border-radius:14px;margin-left:6px">${_stuGrade}</span></div>
     <div style="font-size:42px;font-weight:900;color:var(--primary);margin:8px 0">~${totalM}<span style="font-size:16px;font-weight:600">词</span></div>
     <div style="font-size:14px;color:#7c3aed;font-weight:700;margin-bottom:6px">相当于${equivGrade}的单词水平</div>
     ${pctile!==null?`<div style="display:inline-block;padding:6px 18px;border-radius:20px;background:${pctile>=70?'#ecfdf5':'#fffbeb'};color:${pctile>=70?'#10b981':'#f59e0b'};font-size:15px;font-weight:800">超过同年级 ${pctile}% 的同学</div>`:''}
@@ -1180,7 +1180,7 @@ function finishTest(){
     const wrap=document.getElementById('pyramidWrap');
     if(!wrap)return;
     const topPct=100-pctile;
-    const cv=document.createElement('canvas');const W=460,H=270;cv.width=W;cv.height=H;
+    const cv=document.createElement('canvas');const W=560,H=260;cv.width=W;cv.height=H;
     const c=cv.getContext('2d');
     const layers=[
       {label:'前5%',lo:0,hi:5,color:'#10b981'},
@@ -1190,7 +1190,7 @@ function finishTest(){
       {label:'前50-75%',lo:50,hi:75,color:'#f59e0b'},
       {label:'后25%',lo:75,hi:100,color:'#ef4444'}
     ];
-    const pyramidW=180,py=28,n=layers.length,totalH=H-py-10,layerH=totalH/n,cx=W/2;
+    const pyramidW=288,py=10,n=layers.length,totalH=H-py-10,layerH=totalH/n,cx=W/2;
     function bw(i){return (pyramidW*(i/n))}
     layers.forEach((l,i)=>{
       const y=py+i*layerH,tw=bw(i),bwi=bw(i+1),isMe=topPct>=l.lo&&topPct<l.hi;
@@ -1214,9 +1214,6 @@ function finishTest(){
         c.fillText('► 你在这里',(cx+midW/2)+10,midY);
       }
     });
-    // Title
-    c.fillStyle='#64748b';c.font='11px -apple-system,sans-serif';c.textAlign='center';
-    c.fillText('年级词汇量分布',cx,16);
     wrap.appendChild(cv);
   },0);
 
