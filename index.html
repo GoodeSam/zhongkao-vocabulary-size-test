@@ -512,8 +512,28 @@ function distractors(tgt,n){
 let _qSeq=0; // rotating counter to distribute correct answer evenly across B/C/D/E
 function makeQ(word,round){
   const ds=distractors(word,3);
-  const correctOpt={text:word.cn.split('\n')[0],correct:true};
-  const wrongOpts=ds.map(d=>({text:d.cn.split('\n')[0],correct:false}));
+  const norm=s=>s.replace(/\s+/g,'').toLowerCase();
+  const correctText=word.cn.split('\n')[0];
+  const correctNorm=norm(correctText);
+  // Deduplicate: ensure no distractor text matches another or the correct answer
+  const usedNorm=new Set([correctNorm]);
+  const uniqueDs=[];
+  for(const d of ds){
+    const t=d.cn.split('\n')[0];
+    const n=norm(t);
+    if(!usedNorm.has(n)){usedNorm.add(n);uniqueDs.push(d)}
+  }
+  // If dedup removed some, fill replacements from WORDS pool
+  if(uniqueDs.length<3){
+    const pool=shuf(WORDS.filter(w=>w.w!==word.w&&w.cn&&!usedNorm.has(norm(w.cn.split('\n')[0]))));
+    for(const w of pool){
+      if(uniqueDs.length>=3)break;
+      const n=norm(w.cn.split('\n')[0]);
+      if(!usedNorm.has(n)){usedNorm.add(n);uniqueDs.push(w)}
+    }
+  }
+  const correctOpt={text:correctText,correct:true};
+  const wrongOpts=uniqueDs.map(d=>({text:d.cn.split('\n')[0],correct:false}));
   // Place correct answer at position determined by rotating counter (0-3 → B/C/D/E)
   const pos=_qSeq%4;
   _qSeq++;
