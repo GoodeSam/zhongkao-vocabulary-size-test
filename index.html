@@ -228,6 +228,7 @@ table.wlt tr:hover{background:var(--bg)}
       <div style="font-size:13px;color:var(--gray)">
         <p style="margin-bottom:4px">&#10003; 每题限时 <b>8秒</b>，超时视为不确定</p>
         <p style="margin-bottom:4px">&#10003; 不确定时请选 <b>"我不确定"</b>，诚实作答比猜对更有诊断价值</p>
+        <p style="margin-bottom:4px;color:#dc2626">&#10007; <b>乱猜或选错会扣分</b>，比选"我不确定"结果更差 &mdash; 不会就老实选A</p>
         <p>&#10003; 反应时间纳入评估 &mdash; 犹豫过久的正确答案会被适当降权</p>
       </div>
     </div>
@@ -649,10 +650,10 @@ function handleTimeout(){
 }
 
 // ════════════ SCORING ════════════
-// Returns a score between 0 and 1 for a single answer
+// Returns a score: 1=fast correct, 0=unsure/timeout, negative=wrong
 function calcScore(isCorrect,isUnsure,elapsed,isTimeout){
-  if(isTimeout||isUnsure) return 0;
-  if(!isCorrect) return 0;
+  if(isTimeout||isUnsure) return 0;   // "我不确定" or timeout: neutral
+  if(!isCorrect) return -0.3;          // wrong answer: negative signal (worse than unsure)
   // Correct answer — penalize if slow
   if(elapsed>SLOW_THRESHOLD){
     // Linear decay from SLOW_THRESHOLD to TIME_LIMIT
@@ -876,7 +877,7 @@ function finishTest(){
   // Estimated mastered words per tier (skipped top words count as mastered)
   const estM={};let totalM=SKIP_TOP;
   for(const t of['S','A','B','C']){
-    estM[t]=Math.round(byTier[t].length*tierRates[t]);
+    estM[t]=Math.max(0,Math.round(byTier[t].length*Math.max(0,tierRates[t])));
     totalM+=estM[t];
   }
 
@@ -906,11 +907,11 @@ function finishTest(){
   const avgTime=correctTimes.length?Math.round(correctTimes.reduce((a,b)=>a+b,0)/correctTimes.length*10)/10:0;
 
   // Risk score
-  const sR=tierRates['S']||0, aR=tierRates['A']||0;
-  const overallMastery=total?(Q.ans.reduce((s,a)=>s+a.score,0)/total):0;
-  const clozePct=Math.round((sR*.5+aR*.3+overallMastery*.2)*100);
-  const gramPct=Math.round((sR*.6+aR*.4)*100);
-  const readPct=Math.round(overallMastery*100);
+  const sR=Math.max(0,tierRates['S']||0), aR=Math.max(0,tierRates['A']||0);
+  const overallMastery=Math.max(0,total?(Q.ans.reduce((s,a)=>s+Math.max(0,a.score),0)/total):0);
+  const clozePct=Math.max(0,Math.round((sR*.5+aR*.3+overallMastery*.2)*100));
+  const gramPct=Math.max(0,Math.round((sR*.6+aR*.4)*100));
+  const readPct=Math.max(0,Math.round(overallMastery*100));
   const avgPct=Math.round((clozePct+gramPct+readPct)/3);
   const riskLvl=avgPct<50?'高风险':avgPct<75?'中等风险':'低风险';
   const riskCls=avgPct<50?'lo':avgPct<75?'mi':'hi';
