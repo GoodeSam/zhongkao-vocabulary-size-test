@@ -177,6 +177,7 @@ table.wlt tr:hover{background:var(--bg)}
   .tier-g{grid-template-columns:repeat(2,1fr)}
 }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
 <body>
 <div class="ctr">
@@ -1207,7 +1208,7 @@ function finishTest(){
       </div>
       <button class="btn-share btn-dl" onclick="downloadReport()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        下载完整报告（PDF + 长图）
+        下载完整报告长图
       </button>
       <button class="btn-share btn-tutor" onclick="contactTutor()">
         联系土妹 &rarr; 获得你的专属词汇提升计划
@@ -1245,239 +1246,64 @@ function showAll(){
 }
 
 function downloadReport(){
-  downloadPDF();
-  shareToMoments();
-}
-
-function downloadPDF(){
-  // Use a new window with just the report content for clean printing
-  const rpt=$('rpt').innerHTML;
-  const w=window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
-<title>中考词汇诊断报告</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
-  color:#1e293b;line-height:1.6;padding:24px;max-width:700px;margin:0 auto}
-.card{border:1px solid #e2e8f0;border-radius:10px;padding:18px;margin-bottom:14px;page-break-inside:avoid}
-.card-t{font-size:14px;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:6px}
-.wgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
-.wbox{background:#f8fafc;border-radius:8px;padding:10px;text-align:center}
-.wbox .n{font-size:22px;font-weight:800;color:#4361ee}
-.wbox .l{font-size:10px;color:#64748b;margin-top:2px}
-.sc-hdr{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
-.sc-t{font-size:13px;font-weight:700}
-.sc-v{font-size:22px;font-weight:800}
-.sc-v.hi{color:#10b981}.sc-v.mi{color:#f59e0b}.sc-v.lo{color:#ef4444}
-.sbar{width:100%;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;margin:4px 0}
-.sbar-f{height:100%;border-radius:4px}
-.sbar-f.hi{background:#10b981}.sbar-f.mi{background:#f59e0b}.sbar-f.lo{background:#ef4444}
-.sc-d{font-size:11px;color:#64748b}
-.tier-g{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:10px 0}
-.tbox{text-align:center;padding:8px 4px;border-radius:6px}
-.tbox .tn{font-size:11px;font-weight:700}
-.tbox .tp{font-size:18px;font-weight:800;margin:2px 0}
-.tbox .td{font-size:9px;opacity:.8}
-.ts{background:#fef2f2;color:#dc2626}
-.ta{background:#fff7ed;color:#ea580c}
-.tb{background:#fefce8;color:#ca8a04}
-.tc{background:#f0fdf4;color:#16a34a}
-.mrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.mlab{width:72px;font-size:11px;font-weight:600;text-align:right}
-.mbar{flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden}
-.mbar-i{height:100%;border-radius:3px}
-.mpct{width:32px;font-size:12px;font-weight:700;text-align:right}
-.mconf{font-size:9px;padding:1px 4px;border-radius:3px;background:#f8fafc;color:#64748b}
-.ri{display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid #e2e8f0;font-size:11px}
-.ri:last-child{border-bottom:none}
-.ri-t{width:64px;font-weight:600}
-.ri-bar{flex:1;height:4px;background:#e2e8f0;border-radius:2px;overflow:hidden}
-.ri-bar-i{height:100%;border-radius:2px;background:#4361ee}
-.ri-p{width:44px;text-align:right;font-weight:700;color:#4361ee}
-table.wlt{width:100%;font-size:11px;border-collapse:collapse}
-table.wlt th{text-align:left;padding:5px 4px;border-bottom:2px solid #e2e8f0;font-weight:700;color:#64748b;font-size:10px}
-table.wlt td{padding:5px 4px;border-bottom:1px solid #e2e8f0}
-.wlt .wc{font-weight:700}.wlt .cc{color:#64748b;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.stars{color:#f59e0b;letter-spacing:-2px}
-.badge{display:inline-block;padding:1px 7px;border-radius:12px;font-size:10px;font-weight:700}
-.badge-s{background:#fef2f2;color:#dc2626}
-.badge-a{background:#fff7ed;color:#ea580c}
-.badge-b{background:#fefce8;color:#ca8a04}
-.badge-c{background:#f0fdf4;color:#16a34a}
-.cnote{background:#fffbeb;border:1px solid #fcd34d;border-radius:6px;padding:10px;font-size:10px;color:#92400e;line-height:1.6}
-.cta-card{background:linear-gradient(135deg,#eef0ff,#f5f0ff);border:2px solid #4361ee}
-.share-card{display:none!important}
-.pdf-social{border:2px solid #4361ee;border-radius:10px;padding:18px;margin:14px 0;text-align:center;page-break-inside:avoid}
-.pdf-social h3{font-size:16px;color:#4361ee;margin-bottom:6px}
-.pdf-social .ps-body{font-size:12px;color:#1e293b;line-height:1.8}
-.pdf-social .ps-url{display:inline-block;margin:8px 0;padding:6px 14px;background:#eef0ff;border-radius:6px;font-size:13px;font-weight:700;color:#4361ee;word-break:break-all}
-.pdf-social .ps-cta{margin-top:10px;padding:10px;background:#f0fdf4;border-radius:8px;font-size:12px;color:#16a34a}
-.mt8{margin-top:6px}.mt14{margin-top:10px}.mb14{margin-bottom:10px}
-.fade{} /* no animation in print */
-.pdf-header{text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #4361ee}
-.pdf-header h1{font-size:20px;color:#4361ee}
-.pdf-header .sub{font-size:11px;color:#64748b;margin-top:2px}
-@media print{body{padding:12px}@page{margin:12mm}}
-</style>
-</head><body>
-<div class="pdf-header">
-  <h1>中考词汇智能诊断报告</h1>
-  <div class="sub">基于142套全国中考真题词频数据 &middot; 生成时间：${new Date().toLocaleString('zh-CN')}</div>
-</div>
-${rpt}
-<div class="pdf-social">
-  <h3>把这份报告晒出去，让朋友们监督你的进步</h3>
-  <div class="ps-body">
-    发到<b>微信朋友圈</b>、<b>抖音</b>或<b>小红书</b>，记录你此刻的词汇水平。<br>
-    公开承诺是最有效的学习动力——让你的社交圈见证你迈向下一个高度。
-  </div>
-  <div style="display:flex;align-items:center;justify-content:center;gap:20px;margin:14px 0;flex-wrap:wrap">
-    <div style="flex-shrink:0">
-      <img src="${QR_IMG}" style="width:120px;height:120px;border-radius:8px;border:2px solid #e2e8f0">
+  // Build an offscreen container with report content + social footer
+  const wrap=document.createElement('div');
+  wrap.style.cssText='position:absolute;left:-9999px;top:0;width:640px;background:#fff;padding:24px;font-family:-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#1e293b;line-height:1.6';
+  // Header
+  wrap.innerHTML=`<div style="text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #4361ee">
+    <div style="font-size:20px;font-weight:800;color:#4361ee">中考词汇智能诊断报告</div>
+    <div style="font-size:11px;color:#64748b;margin-top:2px">基于142套全国中考真题词频数据 · 生成时间：${new Date().toLocaleString('zh-CN')}</div>
+  </div>`;
+  // Clone report content (including canvas elements)
+  const rptEl=$('rpt');
+  const rptClone=rptEl.cloneNode(true);
+  // Copy canvas contents
+  const srcCanvases=rptEl.querySelectorAll('canvas');
+  const dstCanvases=rptClone.querySelectorAll('canvas');
+  srcCanvases.forEach((sc,i)=>{
+    if(dstCanvases[i]){
+      dstCanvases[i].width=sc.width;dstCanvases[i].height=sc.height;
+      const dc=dstCanvases[i].getContext('2d');
+      dc.drawImage(sc,0,0);
+    }
+  });
+  // Remove buttons/share-card from clone
+  rptClone.querySelectorAll('.btn-share,.share-card,.social-proof').forEach(el=>el.remove());
+  wrap.appendChild(rptClone);
+  // Social footer
+  const footer=document.createElement('div');
+  footer.innerHTML=`<div style="border:2px solid #4361ee;border-radius:10px;padding:18px;margin:14px 0;text-align:center">
+    <div style="font-size:16px;font-weight:800;color:#4361ee;margin-bottom:6px">把这份报告晒出去，让朋友们监督你的进步</div>
+    <div style="font-size:12px;color:#1e293b;line-height:1.8;margin-bottom:10px">
+      发到<b>微信朋友圈</b>、<b>抖音</b>或<b>小红书</b>，记录你此刻的词汇水平。<br>
+      公开承诺是最有效的学习动力——让你的社交圈见证你迈向下一个高度。
     </div>
-    <div style="text-align:left;font-size:12px;line-height:1.8;color:#1e293b">
-      <div style="font-weight:700;font-size:13px;color:#4361ee;margin-bottom:4px">扫码两件事：</div>
-      <div>1. 加土妹好友，获得专属词汇提升计划</div>
-      <div>2. 邀请朋友来测，看谁词汇量更强</div>
-      <div style="margin-top:6px;color:#64748b;font-size:11px">测试地址：${location.href.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap">
+      <div style="flex-shrink:0">
+        <img src="${WECHAT_QR}" style="width:120px;height:auto;border-radius:8px;border:2px solid #e2e8f0">
+      </div>
+      <div style="text-align:left;font-size:12px;line-height:1.8;color:#1e293b">
+        <div style="font-weight:700;font-size:13px;color:#4361ee;margin-bottom:4px">扫码两件事：</div>
+        <div>1. 加土妹好友，获得专属词汇提升计划</div>
+        <div>2. 邀请朋友来测，看谁词汇量更强</div>
+      </div>
     </div>
-  </div>
-</div>
-</body></html>`);
-  w.document.close();
-  // Wait for rendering then trigger print (Save as PDF)
-  setTimeout(()=>{w.print()},400);
-}
-
-function shareToMoments(){
-  // Generate a share card image via canvas, then prompt user to save & share
-  const cvs=document.createElement('canvas');
-  const W=640,H=960;
-  cvs.width=W;cvs.height=H;
-  const ctx=cvs.getContext('2d');
-
-  // Background
-  const grad=ctx.createLinearGradient(0,0,W,H);
-  grad.addColorStop(0,'#0d1117');
-  grad.addColorStop(1,'#161b22');
-  ctx.fillStyle=grad;
-  ctx.fillRect(0,0,W,H);
-
-  // Decorative circle
-  ctx.beginPath();ctx.arc(W-60,80,100,0,Math.PI*2);
-  ctx.fillStyle='rgba(67,97,238,0.15)';ctx.fill();
-  ctx.beginPath();ctx.arc(60,H-100,80,0,Math.PI*2);
-  ctx.fillStyle='rgba(124,58,237,0.12)';ctx.fill();
-
-  // Title
-  ctx.fillStyle='#fff';ctx.font='bold 32px "PingFang SC",sans-serif';
-  ctx.fillText('我的2026年中考词汇诊断成绩单',40,70);
-
-  // Subtitle
-  ctx.fillStyle='#8b949e';ctx.font='16px "PingFang SC",sans-serif';
-  ctx.fillText('基于142套全国中考真题',40,100);
-
-  // Divider
-  ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(40,125);ctx.lineTo(W-40,125);ctx.stroke();
-
-  // Stats
-  const stats=window._reportStats||{};
-  const boxes=[
-    {label:'词频覆盖率',value:(stats.cov||0)+'%',color:'#fbbf24',y:170},
-    {label:'已掌握约',value:'~'+(stats.mastered||0)+'词',color:'#60a5fa',y:260},
-    {label:'待突破',value:(stats.gap||0)+'词',color:'#34d399',y:350},
-  ];
-  for(const b of boxes){
-    ctx.fillStyle='rgba(255,255,255,0.05)';
-    roundRect(ctx,40,b.y,W-80,70,12);ctx.fill();
-    ctx.fillStyle=b.color;ctx.font='bold 30px "PingFang SC",sans-serif';
-    ctx.fillText(b.value,60,b.y+42);
-    ctx.fillStyle='#8b949e';ctx.font='14px "PingFang SC",sans-serif';
-    ctx.fillText(b.label,60,b.y+62);
-  }
-
-  // Tier bars
-  const tiers=stats.tiers||{S:0,A:0,B:0,C:0};
-  const tierColors={S:'#ef4444',A:'#f97316',B:'#eab308',C:'#22c55e'};
-  const tierNames={S:'S核心',A:'A常见',B:'B中频',C:'C低频'};
-  let ty=460;
-  ctx.fillStyle='#fff';ctx.font='bold 16px "PingFang SC",sans-serif';
-  ctx.fillText('各层级掌握率',40,ty);ty+=30;
-  for(const t of['S','A','B','C']){
-    const r=tiers[t]||0;
-    ctx.fillStyle='#8b949e';ctx.font='13px "PingFang SC",sans-serif';
-    ctx.fillText(tierNames[t],40,ty+14);
-    ctx.fillStyle='rgba(255,255,255,0.08)';
-    roundRect(ctx,110,ty,W-190,18,4);ctx.fill();
-    ctx.fillStyle=tierColors[t];
-    roundRect(ctx,110,ty,Math.max(4,(W-190)*r/100),18,4);ctx.fill();
-    ctx.fillStyle='#fff';ctx.font='bold 13px "PingFang SC",sans-serif';
-    ctx.fillText(r+'%',W-70,ty+14);
-    ty+=28;
-  }
-
-  // Divider before QR section
-  ty+=20;
-  ctx.strokeStyle='rgba(255,255,255,0.1)';ctx.lineWidth=1;
-  ctx.beginPath();ctx.moveTo(40,ty);ctx.lineTo(W-40,ty);ctx.stroke();
-
-  // QR code + CTA text section
-  const qrImg=new Image();
-  qrImg.onload=function(){
-    const qrSize=150;
-    // QR on the right side with white background
-    const qrX=W-40-qrSize-12, qrY=ty+16;
-    ctx.fillStyle='#fff';
-    roundRect(ctx,qrX-8,qrY-8,qrSize+16,qrSize+16,10);ctx.fill();
-    ctx.drawImage(qrImg,qrX,qrY,qrSize,qrSize);
-
-    // Left side: 3-line CTA copy
-    const txX=40;
-    let txY=ty+36;
-    ctx.fillStyle='#fff';ctx.font='bold 15px "PingFang SC",sans-serif';
-    ctx.fillText('扫码加土妹好友',txX,txY);
-    txY+=24;
-    ctx.fillStyle='#c9d1d9';ctx.font='13px "PingFang SC",sans-serif';
-    ctx.fillText('获得你的专属词汇提升计划',txX,txY);
-
-    txY+=32;
-    ctx.fillStyle='#c9d1d9';ctx.font='13px "PingFang SC",sans-serif';
-    ctx.fillText('分享到朋友圈/抖音/小红书',txX,txY);
-    txY+=22;
-    ctx.fillText('让朋友监督你迈向下一个新高度',txX,txY);
-
-    txY+=32;
-    ctx.fillStyle='#fbbf24';ctx.font='bold 16px "PingFang SC",sans-serif';
-    ctx.fillText('这是我的成绩单',txX,txY);
-    txY+=24;
-    ctx.fillText('你敢来挑战我吗？',txX,txY);
-
-    // Footer
-    ctx.fillStyle='#484f58';ctx.font='11px "PingFang SC",sans-serif';
-    ctx.fillText('中考词汇智能诊断 · 142套全国真题数据驱动',40,H-16);
-
-    // Download the image
-    cvs.toBlob(blob=>{
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;
-    a.download='中考词汇诊断-我的成绩.png';
-    a.click();
-    URL.revokeObjectURL(url);
-    // Show tip
-    showShareTip();
-  },'image/png');
-  };
-  qrImg.src=QR_IMG;
-}
-
-function roundRect(ctx,x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
-  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
-  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
-  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+  </div>`;
+  wrap.appendChild(footer);
+  document.body.appendChild(wrap);
+  // Use html2canvas to capture
+  html2canvas(wrap,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:640}).then(canvas=>{
+    canvas.toBlob(blob=>{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;
+      a.download='中考词汇诊断报告.png';
+      a.click();
+      URL.revokeObjectURL(url);
+      showShareTip();
+    },'image/png');
+    wrap.remove();
+  }).catch(()=>{wrap.remove()});
 }
 
 function showShareTip(){
