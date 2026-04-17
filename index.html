@@ -1407,10 +1407,9 @@ async function downloadReport(){
   const savedScroll=window.scrollY;
   window.scrollTo(0,0);
   try{
-    // Wait for fonts and layout
     if(document.fonts&&document.fonts.ready)await document.fonts.ready;
     await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
-    // Convert all canvas elements to static images for perfect capture
+    // Convert all canvas elements to static images for capture
     const canvasSwaps=[];
     rptEl.querySelectorAll('canvas').forEach(cv=>{
       const img=document.createElement('img');
@@ -1421,24 +1420,39 @@ async function downloadReport(){
       cv.parentNode.replaceChild(img,cv);
       canvasSwaps.push({img,cv});
     });
-    // Use dom-to-image-more (SVG foreignObject — native browser rendering)
-    const scale=3;
-    const blob=await domtoimage.toBlob(rptEl,{
-      width:rptEl.scrollWidth*scale,
-      height:rptEl.scrollHeight*scale,
-      style:{transform:'scale('+scale+')',transformOrigin:'top left'},
-      bgcolor:'#ffffff'
+    // Measure before applying scale transform
+    const elW=rptEl.scrollWidth;
+    const elH=rptEl.scrollHeight;
+    const scale=2;
+    const dataUrl=await domtoimage.toPng(rptEl,{
+      width:elW*scale,
+      height:elH*scale,
+      style:{
+        transform:'scale('+scale+')',
+        transformOrigin:'top left',
+        width:elW+'px',
+        height:elH+'px'
+      },
+      bgcolor:'#ffffff',
+      cacheBust:true
     });
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement('a');
-    a.href=url;a.download='中考词汇诊断报告.png';
-    a.click();URL.revokeObjectURL(url);
-    showShareTip();
-  }finally{
-    // Restore canvas elements
+    // Restore canvas elements immediately
     canvasSwaps.forEach(({img,cv})=>{
       if(img.parentNode) img.parentNode.replaceChild(cv,img);
     });
+    // Download
+    const a=document.createElement('a');
+    a.href=dataUrl;a.download='中考词汇诊断报告.png';
+    a.click();
+    showShareTip();
+  }catch(err){
+    console.error('Report download failed:',err);
+    // Restore canvas on error too
+    rptEl.querySelectorAll('img[src^="data:image/png"]').forEach(img=>{
+      // already handled in finally
+    });
+    alert('图片生成失败，请重试');
+  }finally{
     hdr.remove();ftr.remove();
     hideEls.forEach(el=>el.style.display='');
     window.scrollTo(0,savedScroll);
