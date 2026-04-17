@@ -1267,12 +1267,12 @@ function showAll(){
 }
 
 function downloadReport(){
-  // Temporarily inject header and footer into the live report for capture
   const rptEl=$('rpt');
+  const SC=3;
   // Hide buttons and social proof during capture
   const hideEls=rptEl.querySelectorAll('.btn-share,.share-card,.social-proof');
   hideEls.forEach(el=>el.style.display='none');
-  // Insert header before report content
+  // Inject header
   const hdr=document.createElement('div');
   hdr.id='_capHdr';
   hdr.innerHTML=`<div style="text-align:center;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #4361ee">
@@ -1280,7 +1280,7 @@ function downloadReport(){
     <div style="font-size:11px;color:#64748b;margin-top:2px">基于142套全国中考真题词频数据 · 生成时间：${new Date().toLocaleString('zh-CN')}</div>
   </div>`;
   rptEl.insertBefore(hdr,rptEl.firstChild);
-  // Append social footer
+  // Inject social footer
   const ftr=document.createElement('div');
   ftr.id='_capFtr';
   ftr.innerHTML=`<div style="border:2px solid #4361ee;border-radius:10px;padding:18px;margin:14px 0;text-align:center">
@@ -1301,8 +1301,39 @@ function downloadReport(){
     </div>
   </div>`;
   rptEl.appendChild(ftr);
-  // Capture the live on-screen report directly
-  html2canvas(rptEl,{scale:3,useCORS:true,backgroundColor:'#ffffff'}).then(canvas=>{
+  // Scroll to top so html2canvas sees full element in viewport context
+  const savedScroll=window.scrollY;
+  window.scrollTo(0,0);
+  // Collect original canvas pixel data before html2canvas clones the DOM
+  const origCanvases=rptEl.querySelectorAll('canvas');
+  const canvasData=[];
+  origCanvases.forEach(sc=>{
+    canvasData.push({w:sc.width,h:sc.height,data:sc.toDataURL()});
+  });
+  html2canvas(rptEl,{
+    scale:SC,
+    useCORS:true,
+    backgroundColor:'#ffffff',
+    scrollX:0,scrollY:0,
+    windowWidth:rptEl.scrollWidth,
+    windowHeight:rptEl.scrollHeight,
+    onclone:function(clonedDoc){
+      // In the cloned document, upscale all canvas elements to match capture scale
+      const clonedCanvases=clonedDoc.querySelectorAll('#rpt canvas');
+      clonedCanvases.forEach((cc,i)=>{
+        if(!canvasData[i])return;
+        const d=canvasData[i];
+        // Set canvas backing size to SC× for sharp rendering
+        cc.width=d.w*SC;cc.height=d.h*SC;
+        cc.style.width=d.w+'px';cc.style.height=d.h+'px';
+        const ctx=cc.getContext('2d');
+        const img=new Image();
+        img.src=d.data;
+        ctx.imageSmoothingEnabled=false;
+        ctx.drawImage(img,0,0,d.w*SC,d.h*SC);
+      });
+    }
+  }).then(canvas=>{
     canvas.toBlob(blob=>{
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');
@@ -1313,9 +1344,9 @@ function downloadReport(){
       showShareTip();
     },'image/png');
   }).finally(()=>{
-    // Clean up: remove injected elements, restore hidden ones
     hdr.remove();ftr.remove();
     hideEls.forEach(el=>el.style.display='');
+    window.scrollTo(0,savedScroll);
   });
 }
 
