@@ -1293,7 +1293,7 @@ function downloadReport(){
   wrap.appendChild(footer);
   document.body.appendChild(wrap);
   // Use html2canvas to capture
-  html2canvas(wrap,{scale:2,useCORS:true,backgroundColor:'#ffffff',width:640}).then(canvas=>{
+  html2canvas(wrap,{scale:3,useCORS:true,backgroundColor:'#ffffff',width:640}).then(canvas=>{
     canvas.toBlob(blob=>{
       const url=URL.createObjectURL(blob);
       const a=document.createElement('a');
