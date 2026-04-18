@@ -268,6 +268,10 @@ table.wlt tr:hover{background:var(--bg)}
     </div>
     <button class="btn btn-p" onclick="startTest()">开始诊断测试</button>
     <div class="txc mt8" style="font-size:11px;color:var(--gray)">启发式诊断，非标准化考试 &middot; 约15题</div>
+    <button class="btn btn-o" style="margin-top:10px;font-size:13px;padding:10px" onclick="shareHomepage()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="vertical-align:middle;margin-right:4px"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+      分享首页到朋友圈
+    </button>
     <div class="txc mt8" id="hist-note" style="font-size:11px;color:var(--gray)"></div>
     <script>
     (function(){
@@ -1285,6 +1289,67 @@ function showAll(){
   });
   tbody.innerHTML=h;
   const btn=document.querySelector('.show-all-btn');if(btn)btn.remove();
+}
+
+async function shareHomepage(){
+  const el=$('S0');
+  // Hide the share button itself and the form inputs during capture
+  const hideEls=el.querySelectorAll('.btn-o,#stuName,#stuGrade,#hist-note');
+  hideEls.forEach(e=>e.style.display='none');
+  // Temporarily hide the start button to replace with CTA text
+  const startBtn=el.querySelector('.btn-p');
+  startBtn.style.display='none';
+  // Add CTA footer
+  const cta=document.createElement('div');
+  cta.style.cssText='text-align:center;padding:16px 0 8px;border-top:2px solid #4361ee;margin-top:14px';
+  cta.innerHTML=`<div style="font-size:15px;font-weight:800;color:#4361ee;margin-bottom:6px">扫码测测你的中考词汇量</div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:8px">
+      <img src="${WECHAT_QR}" style="width:100px;height:auto;border-radius:8px;border:2px solid #e2e8f0">
+      <div style="text-align:left;font-size:12px;color:#1e293b;line-height:1.8">
+        <div style="font-weight:700;color:#4361ee">扫码加土妹好友</div>
+        <div>获取测试链接</div>
+        <div>定制你的词汇提升计划</div>
+      </div>
+    </div>`;
+  el.appendChild(cta);
+  const savedScroll=window.scrollY;
+  window.scrollTo(0,0);
+  try{
+    if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+    await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+    // Convert canvas elements to images
+    const canvasSwaps=[];
+    el.querySelectorAll('canvas').forEach(cv=>{
+      const img=document.createElement('img');
+      img.src=cv.toDataURL('image/png');
+      img.style.cssText=cv.style.cssText||'';
+      img.style.width=(cv.style.width||cv.width+'px');
+      img.style.height=(cv.style.height||cv.height+'px');
+      cv.parentNode.replaceChild(img,cv);
+      canvasSwaps.push({img,cv});
+    });
+    const elW=el.scrollWidth;
+    const elH=el.scrollHeight;
+    const scale=2;
+    const dataUrl=await domtoimage.toPng(el,{
+      width:elW*scale,height:elH*scale,
+      style:{transform:'scale('+scale+')',transformOrigin:'top left',width:elW+'px',height:elH+'px'},
+      bgcolor:'#ffffff',cacheBust:true
+    });
+    canvasSwaps.forEach(({img,cv})=>{if(img.parentNode)img.parentNode.replaceChild(cv,img)});
+    const a=document.createElement('a');
+    a.href=dataUrl;a.download='中考词汇测试-邀请好友.png';
+    a.click();
+    showShareTip();
+  }catch(err){
+    console.error('Homepage share failed:',err);
+    alert('图片生成失败，请重试');
+  }finally{
+    cta.remove();
+    startBtn.style.display='';
+    hideEls.forEach(e=>e.style.display='');
+    window.scrollTo(0,savedScroll);
+  }
 }
 
 async function downloadReport(){
