@@ -1022,6 +1022,19 @@ function finishTest(){
     <div style="margin-top:8px;font-size:11px;color:var(--gray)">样本覆盖142套中考真题 · 可信度${total>=25?'A':total>=15?'B':'C'}</div>
   </div>`;
 
+  // ══════ 词汇量溢出提示 ══════
+  if(totalM>2800){
+    h+=`<div class="card fade" style="background:#fef2f2;border:2px solid #ef4444;text-align:center;padding:20px">
+      <div style="font-size:18px;font-weight:800;color:#ef4444;margin-bottom:8px">⚡ 你的词汇水平已爆表！</div>
+      <div style="font-size:14px;color:var(--txt);line-height:1.8;margin-bottom:10px">
+        本测试基于中考词库（共 3098 词），你的词汇量已达到 <b>${totalM}</b> 词，<b>接近或超出词库上限</b>，测试结果已<b>无法准确反映你的真实水平</b>。
+      </div>
+      <div style="font-size:13px;color:var(--txt);line-height:1.8;padding:12px;background:#fff;border-radius:10px">
+        <b style="color:var(--primary)">建议：</b>你的中考词汇已基本过关，请联系土妹参加<b style="color:#7c3aed">高中词汇专项测试</b>，获取更精准的诊断和针对性提升方案。
+      </div>
+    </div>`;
+  }
+
   // ══════ 2. 诊断结论卡 ══════
   const mainIssue=covScore<60?'高频词覆盖严重不足，大量考试核心词尚未掌握':
     covScore<80?(fastRate<50?'中频词覆盖断层 + 高频词识别速度偏慢':'中频词覆盖存在断层，需要定向补齐'):
