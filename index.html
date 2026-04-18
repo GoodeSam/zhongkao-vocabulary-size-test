@@ -464,13 +464,40 @@ const _simIndex={};
   });
 })();
 
+// Synonym groups: words with identical Chinese definitions should not appear as distractors for each other
+const _synonymGroups=[
+  ['stupid','silly','foolish'],['i','me'],['he','him'],['we','us'],['your','yours'],
+  ['say','speak'],['our','ours'],['important','significant'],['everyone','everybody'],
+  ['choose','select'],['phone','telephone'],['almost','nearly'],['choice','option'],
+  ['protection','conservation'],['rich','wealthy'],['rubbish','garbage'],['maybe','perhaps'],
+  ['huge','vast'],['sick','ill'],['tool','instrument'],['railway','rail'],
+  ['percent','percentage'],['hat','cap'],['terrible','awful'],['proper','suitable'],
+  ['luckily','fortunately'],['lady','madam'],['crazy','mad'],['plane','airplane'],
+  ['thankful','grateful'],['truck','studio'],['site','location'],['goodbye','bye'],
+  ['enjoyable','candy'],['fishermen','fisherman'],['therefore','thus'],['humor','humour']
+];
+// Build lookup: word → set of all cn definitions in its synonym group
+const _synCnMap={};
+(function(){
+  for(const grp of _synonymGroups){
+    const allCn=new Set();
+    for(const gw of grp){
+      const found=WORDS.find(w=>w.w.toLowerCase()===gw);
+      if(found)allCn.add(found.cn.split('\n')[0]);
+    }
+    for(const gw of grp) _synCnMap[gw]=[...allCn];
+  }
+})();
+
 // Global set: distractor words already used across all questions in this test
 let _usedDistractorWords=new Set();
 
 function distractors(tgt,n){
   const tgtCn=tgt.cn.split('\n')[0];
   const out=[];
-  const usedCn=new Set([tgtCn]);
+  // Seed usedCn with target's definition AND all synonym definitions
+  const synDefs=_synCnMap[tgt.w.toLowerCase()]||[];
+  const usedCn=new Set([tgtCn,...synDefs]);
 
   // First: try similar-spelling words from the prebuilt index
   const simList=_simIndex[tgt.w.toLowerCase()]||[];
