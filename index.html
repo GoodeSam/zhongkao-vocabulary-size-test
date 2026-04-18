@@ -1293,6 +1293,10 @@ function showAll(){
 
 async function shareHomepage(){
   const el=$('S0');
+  // Clone page header into S0 for capture
+  const hdrClone=document.querySelector('.hdr').cloneNode(true);
+  hdrClone.id='_capHdrClone';
+  el.insertBefore(hdrClone,el.firstChild);
   // Hide the share button itself and the form inputs during capture
   const hideEls=el.querySelectorAll('.btn-o,#stuName,#stuGrade,#hist-note');
   hideEls.forEach(e=>e.style.display='none');
@@ -1345,6 +1349,7 @@ async function shareHomepage(){
     console.error('Homepage share failed:',err);
     alert('图片生成失败，请重试');
   }finally{
+    hdrClone.remove();
     cta.remove();
     startBtn.style.display='';
     hideEls.forEach(e=>e.style.display='');
