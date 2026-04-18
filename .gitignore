@@ -2,6 +2,7 @@
 *.xlsx
 *.md
 !README.md
+!processwordtest.md
 *.json
 .DS_Store
 .claude/
