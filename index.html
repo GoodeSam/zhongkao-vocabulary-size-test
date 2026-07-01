@@ -1336,7 +1336,7 @@ function renderReport(){
     </div>
     <div class="tier-g" style="margin-top:8px">
       ${TIERS.map(t=>{
-        const r=Math.round(tierRates[t]*100);
+        const r=Math.round(Math.max(0,tierRates[t])*100);
         const cls=t==='S'?'ts':t==='A'?'ta':t==='B'?'tb':'tc';
         const nm=t==='S'?'S·核心':t==='A'?'A·常见':t==='B'?'B·中频':'C·低频';
         return `<div class="tbox ${cls}"><div class="tn">${nm}</div><div class="tp">${r}%</div>
